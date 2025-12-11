@@ -99,6 +99,7 @@ int main(void)
 /* USER CODE BEGIN Boot_Mode_Sequence_0 */
   int32_t timeout;
 /* USER CODE END Boot_Mode_Sequence_0 */
+/* Enable the CPU Cache */
 
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();
@@ -188,27 +189,35 @@ Error_Handler();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
-  /* initialize LVGL framework */
-  lv_init();
 
-  /* initialize display and touchscreen */
-  lvgl_display_init();
-  lvgl_touchscreen_init();
 
-  /* lvgl demo */
-  lv_demo_widgets();
-  //lv_demo_music();
+    /* initialize LVGL framework */
+    lv_init();
 
-  /* pwm */
-  if (HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1) != HAL_OK)
-    Error_Handler();
-  /* USER CODE END 2 */
+    /* initialize display and touchscreen */
+    lvgl_display_init();
+    lvgl_touchscreen_init();
 
-  /* Call init function for freertos objects (in freertos.c) */
-  MX_FREERTOS_Init();
+    lv_tick_set_cb(HAL_GetTick);
 
-  /* Start scheduler */
-  osKernelStart();
+    /* lvgl demo */
+    lv_demo_widgets();
+  //  lv_demo_music();
+  //  lv_demo_benchmark();
+
+    /* pwm */
+    if (HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1) != HAL_OK)
+      Error_Handler();
+
+    /* Call init function for freertos objects (in freertos.c) */
+    MX_FREERTOS_Init();
+    /* USER CODE END 2 */
+
+    /* Init scheduler */
+    osKernelInitialize();
+
+    /* Start scheduler */
+    osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
