@@ -46,6 +46,7 @@
 #include "lvgl/demos/lv_demos.h"
 #include "lvgl_port_touch.h"
 #include "lvgl_port_display.h"
+#include "ui.h"
 
 /* USER CODE END Includes */
 
@@ -201,9 +202,11 @@ Error_Handler();
     lv_tick_set_cb(HAL_GetTick);
 
     /* lvgl demo */
-    lv_demo_widgets();
+//    lv_demo_widgets();
   //  lv_demo_music();
   //  lv_demo_benchmark();
+    ui_init();
+
 
     /* pwm */
     if (HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1) != HAL_OK)
@@ -211,13 +214,16 @@ Error_Handler();
 
     /* Call init function for freertos objects (in freertos.c) */
     MX_FREERTOS_Init();
-    /* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-    /* Init scheduler */
-    osKernelInitialize();
+  /* Init scheduler */
+  osKernelInitialize();
 
-    /* Start scheduler */
-    osKernelStart();
+  /* Call init function for freertos objects (in freertos.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
