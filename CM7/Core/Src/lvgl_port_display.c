@@ -6,6 +6,7 @@
 #include "main.h"
 #include "ltdc.h"
 #include "dma2d.h"
+#include "lvgl/src/osal/lv_os_private.h"
 
 //#define DIRECT_MODE
 
@@ -13,20 +14,17 @@
  *  STATIC PROTOTYPES
  **********************/
 
-static void disp_flush (lv_display_t *, const lv_area_t *, uint8_t *);
-
-#ifndef DIRECT_MODE
-static void disp_flush_complete (DMA2D_HandleTypeDef*);
-#endif
+static void disp_flush(lv_display_t *, const lv_area_t *, uint8_t *);
 
 /**********************
  *  STATIC VARIABLES
  **********************/
+
 static lv_display_t * disp;
 
 #ifdef DIRECT_MODE
-#define LVGL_BUFFER_1_ADDR_AT_SDRAM	(0xD0000000)
-#define LVGL_BUFFER_2_ADDR_AT_SDRAM	(0xD0400000)
+#define LVGL_BUFFER_1_ADDR_AT_SDRAM (0xD0000000)
+#define LVGL_BUFFER_2_ADDR_AT_SDRAM (0xD0400000)
 #else
 
 #if LV_COLOR_DEPTH == 16
@@ -43,74 +41,87 @@ static __attribute__((aligned(32))) uint8_t buf_2[MY_DISP_HOR_RES * 30 * 4];
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lvgl_display_init (void)
+void lvgl_display_init(void)
 {
-	/* display initialization */
-
-	disp = lv_display_create(MY_DISP_HOR_RES, MY_DISP_VER_RES);
+    disp = lv_display_create(MY_DISP_HOR_RES, MY_DISP_VER_RES);
+    //lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90); //0,90,180,270
 #ifdef DIRECT_MODE
-	lv_display_set_buffers(disp, (void*) LVGL_BUFFER_1_ADDR_AT_SDRAM, (void*) LVGL_BUFFER_2_ADDR_AT_SDRAM, MY_DISP_HOR_RES * MY_DISP_VER_RES * 4, LV_DISPLAY_RENDER_MODE_DIRECT);
-	HAL_LTDC_SetAddress(&hltdc, (uint32_t)LVGL_BUFFER_2_ADDR_AT_SDRAM, 0);	// start with the second buffer: LVGL will render into the first buffer
-#else
-	lv_display_set_buffers(disp, (void*) buf_1, (void*) buf_2, sizeof(buf_1), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(
+        disp,
+        (void *)LVGL_BUFFER_1_ADDR_AT_SDRAM,
+        (void *)LVGL_BUFFER_2_ADDR_AT_SDRAM,
+        MY_DISP_HOR_RES * MY_DISP_VER_RES * 4,
+        LV_DISPLAY_RENDER_MODE_DIRECT);
 
-	/* interrupt callback for DMA2D transfer */
-	hdma2d.XferCpltCallback = disp_flush_complete;
+    HAL_LTDC_SetAddress(&hltdc,
+                        (uint32_t)LVGL_BUFFER_2_ADDR_AT_SDRAM,
+                        0);
+#else
+    lv_display_set_buffers(
+        disp,
+        (void *)buf_1,
+        (void *)buf_2,
+        sizeof(buf_1),
+        LV_DISPLAY_RENDER_MODE_PARTIAL);
 #endif
 
-	lv_display_set_flush_cb(disp, disp_flush);
+    lv_display_set_flush_cb(disp, disp_flush);
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
-static void
-disp_flush (lv_display_t * display,
-            const lv_area_t * area,
-            uint8_t * px_map)
+static void disp_flush(lv_display_t * display,
+                       const lv_area_t * area,
+                       uint8_t * px_map)
 {
 #ifdef DIRECT_MODE
-	if (lv_display_flush_is_last(disp)) {
-		SCB_CleanInvalidateDCache();
-		// wait for VSYNC to avoid tearing
-		while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
-		// swap framebuffers (NOTE: LVGL will swap the buffers in the background, so here we can set the LCD framebuffer to the current LVGL buffer, which has been just completed)
-		HAL_LTDC_SetAddress(&hltdc, (uint32_t)(lv_display_get_buf_active(disp)->data), 0);
-	}
-	lv_display_flush_ready(disp);
-#else
-  lv_coord_t width = lv_area_get_width(area);
-  lv_coord_t height = lv_area_get_height(area);
+    if(lv_display_flush_is_last(disp)) {
+        SCB_CleanInvalidateDCache();
 
-  SCB_CleanInvalidateDCache();
+        /* wait for VSYNC to avoid tearing */
+        while(!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
 
-#if LV_COLOR_DEPTH == 32
-  DMA2D->FGPFCCR = DMA2D_INPUT_ARGB8888;
-  DMA2D->CR = 0x0U << DMA2D_CR_MODE_Pos;	// no conversion
+        HAL_LTDC_SetAddress(&hltdc,
+            (uint32_t)(lv_display_get_buf_active(disp)->data),
+            0);
+    }
+
+    lv_display_flush_ready(disp);
+
 #else
-  DMA2D->FGPFCCR = DMA2D_INPUT_RGB565;
-  DMA2D->CR = 0x01U << DMA2D_CR_MODE_Pos;	// convert pixel format
-#endif
-  DMA2D->FGMAR = (uint32_t)px_map;
-  DMA2D->FGOR = 0;
-  DMA2D->OPFCCR = DMA2D_OUTPUT_ARGB8888;
-  DMA2D->OMAR = hltdc.LayerCfg[0].FBStartAdress + 4 * \
-                (area->y1 * MY_DISP_HOR_RES + area->x1);
-  DMA2D->OOR = MY_DISP_HOR_RES - width;
-  DMA2D->NLR = (width << DMA2D_NLR_PL_Pos) | (height << DMA2D_NLR_NL_Pos);
-  DMA2D->IFCR = 0x3FU;
-  DMA2D->CR |= DMA2D_CR_TCIE;
-  DMA2D->CR |= DMA2D_CR_START;
+    lv_color_format_t cf = lv_display_get_color_format(display);
+    uint32_t px_size = lv_color_format_get_size(cf); /* RGB565=2, ARGB8888=4 */
+
+    lv_area_t rot_area = *area;
+    lv_display_rotate_area(display, &rot_area);
+
+    int32_t src_w = lv_area_get_width(area);
+    int32_t src_h = lv_area_get_height(area);
+
+    uint32_t src_stride = lv_draw_buf_width_to_stride(src_w, cf);
+    uint32_t fb_stride  = lv_draw_buf_width_to_stride(MY_DISP_HOR_RES, cf);
+
+    uint8_t * fb = (uint8_t *)hltdc.LayerCfg[0].FBStartAdress;
+    fb += (rot_area.y1 * fb_stride) + (rot_area.x1 * px_size);
+
+    SCB_CleanInvalidateDCache();
+
+    lv_display_rotation_t r = lv_display_get_rotation(display);
+
+    if(r == LV_DISPLAY_ROTATION_0) {
+        for(int32_t y = 0; y < src_h; y++) {
+            lv_memcpy(fb, px_map, src_stride);
+            px_map += src_stride;
+            fb     += fb_stride;
+        }
+    }
+    else {
+        lv_draw_sw_rotate(px_map, fb, src_w, src_h, src_stride, fb_stride, r, cf);
+    }
+
+    lv_display_flush_ready(display);
 #endif
 }
 
-#ifndef DIRECT_MODE
-
-static void
-disp_flush_complete (DMA2D_HandleTypeDef *hdma2d)
-{
-  lv_display_flush_ready(disp);
-}
-
-#endif
