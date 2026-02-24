@@ -76,13 +76,13 @@ osThreadId_t lvglTimerHandle;
 const osThreadAttr_t lvglTimer_attributes = {
   .name = "lvglTimer",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 8* 1024
+  .stack_size = 4 * 1024
 };
 /* Definitions for canRxTask */
 osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
   .name = "canTask",
-  .stack_size = 512 * 4,
+  .stack_size = 512 * 2,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -91,7 +91,7 @@ const osThreadAttr_t canTask_attributes = {
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 512 * 4,
+  .stack_size = 512 * 2,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -166,7 +166,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -196,7 +196,7 @@ void StartDefaultTask(void *argument)
 	can_frame_t tx_frame;
 
 	// Configure CAN frame
-	tx_frame.id = 0x123;        // Set appropriate CAN ID
+	tx_frame.id = 0x0A5;        // Set appropriate CAN ID
 	tx_frame.dlc = 8;            // 8 bytes of data
 	tx_frame.extended = false;    // Use standard 11-bit ID
 
@@ -213,8 +213,8 @@ void StartDefaultTask(void *argument)
 	  tx_frame.data[1] = angle & 0xFF;            // Low byte
 
 	  // Bytes 2-3: Motor Speed
-	  tx_frame.data[2] = (speed >> 8) & 0xFF;     // High byte
-	  tx_frame.data[3] = speed & 0xFF;             // Low byte
+	  tx_frame.data[2] = speed & 0xFF;     // High byte
+	  tx_frame.data[3] = (speed >> 8) & 0xFF;             // Low byte
 
 	  // Bytes 4-5: Electrical Output Frequency
 	  uint16_t frequency = (speed * 10) / 7;      // Example calculation
@@ -249,22 +249,24 @@ uint16_t mc_process_motor_can(uint8_t * data) {
      * 4,5 Electrical Output Frequency
      * 6,7 Delta Resolver Filtered
      */
-	return (int8_t )((data[3] << 8) | data[2]);
+	return (int16_t )((data[3] << 8) | data[2]);
 }
 
 /* LVGL timer for tasks */
 void LVGLTimer(void *argument)
 {
 	can_frame_t frame;
-	uint8_t speed = 0;
+	uint16_t speed = 0;
+	uint16_t rpm = 0;
 	for(;;)
 	{
 		if(osMessageQueueGet(canQueueHandle,&frame,NULL,0) == osOK){
-			speed = mc_process_motor_can(frame.data);
-			lv_label_set_text_fmt(ui_Speed, "%2d", speed);
+			if (frame.id == 0x0A5){
+				rpm = mc_process_motor_can(frame.data);
+				speed = rpm * 0.075861;
+				lv_label_set_text_fmt(ui_Speed, "%2d km/h \t %2d RPM", speed,rpm);
+			}
 		}
-
-
 		lv_timer_handler();
 		osDelay(1);
 	}
@@ -274,11 +276,9 @@ void LVGLTimer(void *argument)
 void StartCANTask(void *argument)
 {
     can_frame_t frame;
-    uint8_t var = 0;
 
     for (;;)
     {
-    	var += 1;
         if (can_receive(g_can, &frame, portMAX_DELAY) == CAN_OK)
         {
         	osMessageQueuePut(canQueueHandle, &frame,0,0);
