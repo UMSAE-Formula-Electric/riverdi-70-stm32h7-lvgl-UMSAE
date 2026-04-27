@@ -30,6 +30,7 @@
 #include "ui.h"
 #include "can_driver.h"
 #include "can_port.h"
+#include "vehicle_state.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -86,6 +87,13 @@ const osThreadAttr_t canTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
+osThreadId_t vehicleStateTaskHandle;
+const osThreadAttr_t vehicleStateTask_attributes = {
+    .name = "vehicleStateTask",
+    .stack_size = 512 * 2,
+    .priority = (osPriority_t) osPriorityAboveNormal,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -99,6 +107,7 @@ const osThreadAttr_t defaultTask_attributes = {
 /* USER CODE BEGIN FunctionPrototypes */
 void LVGLTimer(void *argument);
 void StartCANTask(void *argument);
+void StartVehicleStateTask(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -172,6 +181,7 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
 	lvglTimerHandle = osThreadNew(LVGLTimer, NULL, &lvglTimer_attributes);
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
+	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -182,10 +192,12 @@ void MX_FREERTOS_Init(void) {
 
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
+ * @brief  Task responsible for simulating vehicle telemetry.
+ * @details Generates mock motor data (angle, speed, frequency) and broadcasts
+ * it over the CAN bus at a fixed interval of 10Hz.
+ * @param  argument: Unused.
+ * @retval None
+ */
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
@@ -230,8 +242,10 @@ void StartDefaultTask(void *argument)
 	  // Send the CAN frame
 	  if (can_send(g_can, &tx_frame, 100) == CAN_OK) {
 		  // Frame sent successfully
+		  //TODO Add logging here for success
 	  } else {
 		  // Handle send error (optional)
+		  //TODO Add Logging here for failure
 	  }
 
 	  osDelay(100);  // Send every 100ms (10Hz)
@@ -241,6 +255,7 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+// TODO: Remove and add Firmware library submodule
 uint16_t mc_process_motor_can(uint8_t * data) {
     /*
      * Byte
@@ -253,26 +268,37 @@ uint16_t mc_process_motor_can(uint8_t * data) {
 }
 
 /* LVGL timer for tasks */
+/**
+ * @brief  Task handler for the LVGL graphics library.
+ * @details Periodic task that updates UI labels with the latest vehicle state
+ * (Speed and RPM) and executes the LVGL internal timer handler.
+ * @note   Runs with a 20ms period (50Hz).
+ * @param  argument: Unused.
+ * @retval None
+ */
 void LVGLTimer(void *argument)
 {
-	can_frame_t frame;
-	uint16_t speed = 0;
-	uint16_t rpm = 0;
-	for(;;)
-	{
-		if(osMessageQueueGet(canQueueHandle,&frame,NULL,0) == osOK){
-			if (frame.id == 0x0A5){
-				rpm = mc_process_motor_can(frame.data);
-				speed = rpm * 0.075861;
-				lv_label_set_text_fmt(ui_Speed, "%2d km/h \t %2d RPM", speed,rpm);
-			}
-		}
-		lv_timer_handler();
-		osDelay(1);
-	}
+    for (;;)
+    {
+        lv_label_set_text_fmt(
+            ui_Speed,
+            "%2d km/h \t %2d RPM",
+            VehicleState_GetSpeed(),
+            VehicleState_GetRPM()
+        );
+
+        lv_timer_handler();
+        osDelay(20);
+    }
 }
 
-
+/**
+ * @brief  Primary CAN bus listener task.
+ * @details Blocks until a CAN frame is received via the hardware driver,
+ * then pushes the frame into the @ref canQueueHandle for processing.
+ * @param  argument: Unused.
+ * @retval None
+ */
 void StartCANTask(void *argument)
 {
     can_frame_t frame;
@@ -287,5 +313,43 @@ void StartCANTask(void *argument)
     }
 }
 
+/**
+ * @brief  Task for processing raw CAN data into vehicle state.
+ * @details Consumes messages from @ref canQueueHandle. It parses motor controller
+ * frames (ID: 0x0A5), calculates vehicle speed based on RPM, and updates
+ * the global @ref vehicle_state module.
+ * @param  argument: Unused.
+ * @retval None
+ */
+void StartVehicleStateTask(void *argument)
+{
+    can_frame_t frame;
+    uint16_t rpm;
+    uint8_t speed;
+
+    VehicleState_Init();
+
+    //TODO Add more handlers for messages
+    for (;;)
+    {
+        if (osMessageQueueGet(canQueueHandle, &frame, NULL, portMAX_DELAY) == osOK)
+        {
+            switch (frame.id)
+            {
+                case 0x0A5:
+                    rpm = mc_process_motor_can(frame.data);
+
+                    VehicleState_SetRPM((uint8_t)rpm);
+
+                    speed = (uint8_t)(rpm * 0.075861f);
+                    VehicleState_SetSpeed(speed);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+}
 /* USER CODE END Application */
 
