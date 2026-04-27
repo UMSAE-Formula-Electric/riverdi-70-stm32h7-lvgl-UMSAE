@@ -30,6 +30,7 @@
 #include "ui.h"
 #include "can_driver.h"
 #include "can_port.h"
+#include "vehicle_state.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -166,7 +167,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -260,13 +261,14 @@ void LVGLTimer(void *argument)
 	uint16_t rpm = 0;
 	for(;;)
 	{
-		if(osMessageQueueGet(canQueueHandle,&frame,NULL,0) == osOK){
-			if (frame.id == 0x0A5){
-				rpm = mc_process_motor_can(frame.data);
-				speed = rpm * 0.075861;
-				lv_label_set_text_fmt(ui_Speed, "%2d km/h \t %2d RPM", speed,rpm);
-			}
-		}
+//		if(osMessageQueueGet(canQueueHandle,&frame,NULL,0) == osOK){
+//			if (frame.id == 0x0A5){
+////				VehicleState_SetRPM(mc_process_motor_can(frame.data));
+////				VehicleState_SetSpeed(VehicleState_GetRPM() * 0.075861);
+////				lv_label_set_text_fmt(ui_Speed, "%2d km/h \t %2d RPM", VehicleState_GetSpeed(),VehicleState_GetRPM());
+//			}
+//		}
+		//lv_label_set_text_fmt(ui_Speed, "%2d km/h \t %2d RPM", 100,40);
 		lv_timer_handler();
 		osDelay(1);
 	}
