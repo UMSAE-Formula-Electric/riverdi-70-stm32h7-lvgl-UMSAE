@@ -255,18 +255,6 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-// TODO: Remove and add Firmware library submodule
-uint16_t mc_process_motor_can(uint8_t * data) {
-    /*
-     * Byte
-     * 0,1 Motor angle
-     * 2,3 Motor Speed
-     * 4,5 Electrical Output Frequency
-     * 6,7 Delta Resolver Filtered
-     */
-	return (int16_t )((data[3] << 8) | data[2]);
-}
-
 /* LVGL timer for tasks */
 /**
  * @brief  Task handler for the LVGL graphics library.
@@ -336,7 +324,7 @@ void StartVehicleStateTask(void *argument)
         {
             switch (frame.id)
             {
-                case 0x0A5:
+                case CAN_MC_RX_MOTOR_ID:
                     rpm = mc_process_motor_can(frame.data);
 
                     VehicleState_SetRPM((uint8_t)rpm);
@@ -344,7 +332,6 @@ void StartVehicleStateTask(void *argument)
                     speed = (uint8_t)(rpm * 0.075861f);
                     VehicleState_SetSpeed(speed);
                     break;
-
                 default:
                     break;
             }
