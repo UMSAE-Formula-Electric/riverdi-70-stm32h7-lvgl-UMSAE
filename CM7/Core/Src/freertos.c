@@ -31,6 +31,7 @@
 #include "can_driver.h"
 #include "can_port.h"
 #include "vehicle_state.h"
+#include "motor_controller_can_utils.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -325,8 +326,9 @@ void StartVehicleStateTask(void *argument)
             switch (frame.id)
             {
                 case CAN_MC_RX_MOTOR_ID:
-                    rpm = mc_process_motor_can(frame.data);
+                    mc_process_motor_can(frame.data);
 
+                    rpm = mc_get_motor_RPM();
                     VehicleState_SetRPM((uint8_t)rpm);
 
                     speed = (uint8_t)(rpm * 0.075861f);
