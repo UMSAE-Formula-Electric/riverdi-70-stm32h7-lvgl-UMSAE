@@ -32,6 +32,8 @@
 #include "can_port.h"
 #include "vehicle_state.h"
 #include "motor_controller_can_utils.h"
+#include "can_utils.h"
+#include "dashboard_ui.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -269,12 +271,15 @@ void LVGLTimer(void *argument)
 {
     for (;;)
     {
-        lv_label_set_text_fmt(
-            ui_Speed,
-            "%2d km/h \t %2d RPM",
-            VehicleState_GetSpeed(),
-            VehicleState_GetRPM()
-        );
+
+        DashboardUI_SetSpeed(VehicleState_GetSpeed());
+        DashboardUI_SetRPM(VehicleState_GetRPM());
+        DashboardUI_SetBrake(VehicleState_GetBrake());
+        DashboardUI_SetPower(VehicleState_GetPower());
+        DashboardUI_SetThrottle(VehicleState_GetThrottle());
+        DashboardUI_SetSOC(VehicleState_GetSOC());
+        DashboardUI_SetDegree(0);
+        DashboardUI_SetTempGauge(0);
 
         lv_timer_handler();
         osDelay(20);
@@ -314,11 +319,11 @@ void StartVehicleStateTask(void *argument)
 {
     can_frame_t frame;
     uint16_t rpm;
-    uint8_t speed;
+    uint16_t speed;
 
     VehicleState_Init();
 
-    //TODO Add more handlers for messages
+    //TODO This task will get out of hand quickly. The approach needs to change otherwise this will become difficult to maintain.
     for (;;)
     {
         if (osMessageQueueGet(canQueueHandle, &frame, NULL, portMAX_DELAY) == osOK)
@@ -326,14 +331,19 @@ void StartVehicleStateTask(void *argument)
             switch (frame.id)
             {
                 case CAN_MC_RX_MOTOR_ID:
-                    mc_process_motor_can(frame.data);
+                	mc_process_fast_can(frame.data);
 
                     rpm = mc_get_motor_RPM();
-                    VehicleState_SetRPM((uint8_t)rpm);
+                    VehicleState_SetRPM(rpm);
 
-                    speed = (uint8_t)(rpm * 0.075861f);
+                    speed = (uint16_t)(rpm * 0.075861f);
                     VehicleState_SetSpeed(speed);
                     break;
+                case CAN_ACU_TO_VCU_ID:
+                	if(frame.data == CAN_ACB_TSA_ACK || frame.data == CAN_ACB_RTD_ACK || frame.data == CAN_GO_IDLE_REQ){
+                		//TODO Handling for the car state changes.
+                	}
+                	break;
                 default:
                     break;
             }
