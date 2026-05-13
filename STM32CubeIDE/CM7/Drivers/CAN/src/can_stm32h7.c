@@ -42,8 +42,11 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan,
 
            memcpy(f.data, data, 8);
 
-           xQueueSendFromISR(g_ctx->rxq, &f, &hpw);
-
+           if(xQueueSendFromISR(g_ctx->rxq, &f, &hpw) == pdPASS){
+        	   printf("Yeay");
+           }else{
+        	   printf("oh no");
+           }
        }
     }
 
