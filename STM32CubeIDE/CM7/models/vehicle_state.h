@@ -43,8 +43,8 @@ void VehicleState_GetSnapshot(vehicleState_t *dest);
 
 /** @name Motor / Drive Setters */
 /** @{ */
-void VehicleState_SetRPM(uint8_t rpm);
-void VehicleState_SetSpeed(uint8_t speed);
+void VehicleState_SetRPM(uint16_t rpm);
+void VehicleState_SetSpeed(uint16_t speed);
 void VehicleState_SetPower(uint8_t power);
 /** @} */
 

@@ -10,8 +10,8 @@
 #include "vehicle_state.h"
 
 struct vehicleState {
-    uint8_t rpm;
-    uint8_t speed;
+    uint16_t rpm;
+    uint16_t speed;
     uint8_t power;
     uint8_t Throttle;
     uint8_t brake;
@@ -55,12 +55,12 @@ void VehicleState_GetSnapshot(vehicleState_t *dest)
 
 /* ================= Handlers ================= */
 
-void VehicleState_SetRPM(uint8_t rpm)
+void VehicleState_SetRPM(uint16_t rpm)
 {
     g_vehicleState.rpm = rpm;
 }
 
-void VehicleState_SetSpeed(uint8_t speed)
+void VehicleState_SetSpeed(uint16_t speed)
 {
     g_vehicleState.speed = speed;
 }
