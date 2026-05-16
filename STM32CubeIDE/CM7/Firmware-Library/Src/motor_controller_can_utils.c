@@ -160,6 +160,83 @@ void UpdateMCState(int16_t mc_trottle_val) {
 	}
 }
 
+void MotorController_Process(uint32_t can_id, const uint8_t data[8])
+{
+    switch (can_id)
+    {
+        case CAN_MC_RX_TEMP1_ID:
+            mc_process_temp1_can(data);
+            break;
+
+        case CAN_MC_RX_TEMP2_ID:
+            mc_process_temp2_can(data);
+            break;
+
+        case CAN_MC_RX_TEMP3_ID:
+            mc_process_temp3_can(data);
+            break;
+
+        case CAN_MC_RX_ANALOG_INPUTS_VOLTAGE:
+            mc_process_analog_inputs_voltage_can(data);
+            break;
+
+        case CAN_MC_RX_DIGITAL_INPUT_STATUS:
+            mc_process_digital_input_status_can(data);
+            break;
+
+        case CAN_MC_RX_MOTOR_ID:
+            mc_process_motor_can(data);
+            break;
+
+        case CAN_MC_RX_CURRENT_ID:
+            mc_process_current_can(data);
+            break;
+
+        case CAN_MC_RX_VOLT_ID:
+            mc_process_volt_can(data);
+            break;
+
+        case CAN_MC_RX_FAULT_ID:
+            mc_process_fault_can(data);
+            break;
+
+        case CAN_MC_RX_INTERNAL_VOLTAGES:
+            mc_process_internal_volt_can(data);
+            break;
+
+        case CAN_MC_RX_INTERNAL_STATES:
+            mc_process_internal_states_can(data);
+            break;
+
+        case CAN_MC_RX_TORQUE_TIMER_INFO:
+            mc_process_torque_timer_info_can(data);
+            break;
+
+        case CAN_MC_RX_MODULATION_INDEX:
+            mc_process_modulation_index_can(data);
+            break;
+
+        case CAN_MC_RX_FIRMWARE_INFO:
+            mc_process_firmware_info_can(data);
+            break;
+
+        case CAN_MC_RX_DIAGNOSTIC_DATA:
+            mc_process_diagnostic_data_can(data);
+            break;
+
+        case CAN_MC_RX_HIGHSPEED:
+            mc_process_fast_can(data);
+            break;
+
+        case CAN_MC_RX_TORQUE_CAPABILITY:
+            mc_process_torque_capability_can(data);
+            break;
+
+        default:
+            break;
+    }
+}
+
 _Bool isMcCanId(uint16_t canId){
     return (canId == CAN_MC_RX_HIGHSPEED) || (canId == CAN_MC_RX_TEMP1_ID) || (canId == CAN_MC_RX_TEMP2_ID) ||
         (canId == CAN_MC_RX_ANALOG_INPUTS_VOLTAGE) || (canId == CAN_MC_RX_DIGITAL_INPUT_STATUS )||
@@ -265,12 +342,12 @@ float mc_get_current_C(){
     return  (float)mc_currentC / 10;
 }
 
-float mc_getBusCurrent() {
-	return (float)bus_current / 10;
+uint16_t mc_getBusCurrent() {
+	return bus_current / 10;
 }
 
-float mc_getBusVoltage() {
-    return (float)bus_voltage / 10;
+uint16_t mc_getBusVoltage() {
+    return bus_voltage / 10;
 }
 
 float mc_getOutputVoltage(){
@@ -842,7 +919,7 @@ void mc_process_motor_can(uint8_t * data) {
      * 6,7 Delta Resolver Filtered
      */
     mc_angle = (int16_t )((data[1] << 8) | data[0]);
-	mc_speed = (int16_t )((data[3] << 8) | data[2]);
+    mc_rpm = (int16_t )((data[3] << 8) | data[2]);
     mc_Electrical_output_freq =(int16_t )((data[5] << 8) | data[4]);
     mc_delta_resolver_filtered = (int16_t )((data[7] << 8) | data[6]);
 }

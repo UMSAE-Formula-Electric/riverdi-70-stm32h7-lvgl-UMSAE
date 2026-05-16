@@ -44,6 +44,8 @@
 
 #define PEAK_TORQUE			230	//Peak torque for EMRAX 228 motor
 
+void MotorController_Process(uint32_t can_id, const uint8_t data[8]);
+
 _Bool isMcCanId(uint16_t canId);
 
 //Getters
@@ -80,9 +82,9 @@ float mc_get_delta_resolver_filtered();
 float mc_get_current_A();
 float mc_get_current_B();
 float mc_get_current_C();
-float mc_getBusCurrent();
+uint16_t mc_getBusCurrent();
 
-float mc_getBusVoltage();
+uint16_t mc_getBusVoltage();
 float mc_getOutputVoltage();
 float mc_get_vd();
 float mc_get_vq();

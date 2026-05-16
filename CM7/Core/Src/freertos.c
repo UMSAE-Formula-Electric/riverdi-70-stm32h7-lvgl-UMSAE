@@ -30,11 +30,13 @@
 #include "ui.h"
 #include "can_driver.h"
 #include "can_port.h"
-#include "vehicle_state.h"
 #include "motor_controller_can_utils.h"
 #include "bms_can_utils.h"
 #include "can_utils.h"
 #include "dashboard_ui.h"
+#include "can_router.h"
+
+#include "vehicle_state.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,10 +71,10 @@ static can_driver_t *g_can;
 /*
  *	Queue Definitions
  */
-osMessageQueueId_t canQueueHandle;
-const osMessageQueueAttr_t canQueueHandle_attributes = {
-		.name = "canQueue"
-};
+//osMessageQueueId_t canQueueHandle;
+//const osMessageQueueAttr_t canQueueHandle_attributes = {
+//		.name = "canQueue"
+//};
 
 /*
  *	OS thread Definitions
@@ -134,6 +136,7 @@ void vApplicationIdleHook( void )
    important that vApplicationIdleHook() is permitted to return to its calling
    function, because it is the responsibility of the idle task to clean up
    memory allocated by the kernel to any task that has since been deleted. */
+	//TODO log potential gains from this
 }
 /* USER CODE END 2 */
 
@@ -143,7 +146,7 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
    /* Run time stack overflow checking is performed if
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
    called if a stack overflow is detected. */
-
+	//TODO log potential issues comming from the offending task
 }
 /* USER CODE END 4 */
 
@@ -174,7 +177,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-	canQueueHandle = osMessageQueueNew(10,sizeof(can_frame_t),NULL);
+//	canQueueHandle = osMessageQueueNew(10,sizeof(can_frame_t),NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -298,12 +301,18 @@ void LVGLTimer(void *argument)
 void StartCANTask(void *argument)
 {
     can_frame_t frame;
+    uint16_t rpm;
+    uint16_t speed;
+    uint32_t watts;
+    VehicleState_Init();
 
     for (;;)
     {
+
         if (can_receive(g_can, &frame, portMAX_DELAY) == CAN_OK)
         {
-        	osMessageQueuePut(canQueueHandle, &frame,0,0);
+        	CAN_router(&frame);
+
         }
         osDelay(1);
     }
@@ -319,69 +328,63 @@ void StartCANTask(void *argument)
  */
 void StartVehicleStateTask(void *argument)
 {
-    can_frame_t frame;
-    uint16_t rpm;
-    uint16_t speed;
-    uint32_t watts;
+
     VehicleState_Init();
+
+    TickType_t lastWake = xTaskGetTickCount();
 
     //TODO This task will get out of hand quickly. The approach needs to change otherwise this will become difficult to maintain.
     for (;;)
     {
-    	bms_request_state_of_charge_parameters();
-        if (osMessageQueueGet(canQueueHandle, &frame, NULL, portMAX_DELAY) == osOK)
-        {
-            switch (frame.id)
-            {
-                case CAN_MC_RX_MOTOR_ID:
-                	mc_process_fast_can(frame.data);
+        uint16_t rpm = (uint16_t)mc_get_motor_RPM();
+        uint16_t speed = (uint16_t)(rpm * 0.075861f);   // already computed helper
 
-                    rpm = mc_get_motor_RPM();
-                    VehicleState_SetRPM(rpm);
+        VehicleState_SetRPM(rpm);
+        VehicleState_SetSpeed(speed);
 
-                    speed = (uint16_t)(rpm * 0.075861f);
-                    VehicleState_SetSpeed(speed);
-                    break;
-                case 22:
-                	if(frame.data[0] == CAN_ACB_TSA_ACK ||
-                	   frame.data[0] == CAN_ACB_RTD_ACK ||
-                	   frame.data[0] == CAN_GO_IDLE_REQ)
-                	{
-                		VehicleState_SetState(frame.data[0]);
-                	}
-                	break;
-                case CAN_BMS_STATE_OF_CHARGE:
-                	process_bms_state_of_charge_can(frame.data);
-                	VehicleState_SetSOC(get_bms_estimated_state_of_charge());
-                	bms_request_state_of_charge_parameters();
-                	break;
-                case CAN_MC_RX_CURRENT_ID:
-                    mc_process_current_can(frame.data);
+        // Power estimation (if you want crude instantaneous power)
+        uint16_t v = mc_getBusVoltage();
+        uint16_t i = mc_getBusCurrent();
+        uint16_t power = v * i;
 
-                    float current = mc_getBusCurrent();
+        VehicleState_SetWattage(power);
+        VehicleState_SetPower(power); // optional scaling
 
-                    VehicleState_SetPackCurrent((int16_t)current);
 
-                    watts = (int32_t)(mc_getBusVoltage() * current);
+        /* =========================
+         * BMS DATA
+         * ========================= */
+        uint16_t packV = (uint16_t)(bms_getAverageVoltage() * 100); // scale consistency
+        int packI = (int)(get_bms_current()); // signed current but stored uint in your API
 
-                    VehicleState_SetWattage(watts);
+        uint8_t soc = get_bms_estimated_state_of_charge();
 
-                	break;
-                case CAN_MC_RX_VOLT_ID:
-                    mc_process_volt_can(frame.data);
+        VehicleState_SetPackVoltage(packV);
+        VehicleState_SetPackCurrent((uint16_t)packI);
+        VehicleState_SetSOC(soc);
 
-                    VehicleState_SetPackVoltage(
-                        (uint16_t)mc_getBusVoltage());
+        VehicleState_SetCellMax(get_bms_high_voltage());
+        VehicleState_SetCellMin(get_bms_low_voltage());
 
-                    watts = (int32_t)(mc_getBusVoltage() * mc_getBusCurrent());
 
-                    VehicleState_SetWattage(watts);
-                	break;
+        /* =========================
+         * DRIVER INPUTS (if available elsewhere)
+         * ========================= */
+        // VehicleState_SetThrottle(apps_getThrottle());
+        // VehicleState_SetBrake(brake_getValue());
 
-                default:
-                    break;
-            }
-        }
+
+        /* =========================
+         * SYSTEM STATE (optional)
+         * ========================= */
+        // VehicleState_SetState(car_get_state());
+
+
+        /* =========================
+         * LOOP TIMING
+         * ========================= */
+        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(20));
+
     }
 }
 /* USER CODE END Application */

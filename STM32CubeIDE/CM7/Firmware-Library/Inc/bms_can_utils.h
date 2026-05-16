@@ -51,6 +51,8 @@
 
 void init_bms();		// init the bms data structures and mutex
 
+void BMS_Process(uint32_t canID, const uint8_t data[8]);
+
 _Bool isBmsCanId(uint32_t canID);
 
 int bms_getHighTemp();

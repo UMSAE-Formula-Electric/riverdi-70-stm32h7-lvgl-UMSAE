@@ -127,6 +127,100 @@ void init_bms(void){
 
 }
 
+void BMS_Process(uint32_t canID, const uint8_t data[8])
+{
+    if (data == NULL) return;
+
+    // ----------------------------
+    // OVERALL STATUS FRAME
+    // ----------------------------
+    if (canID == CAN_BMS_OVERALL_ID)
+    {
+        process_bms_overall_packet((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // DIAGNOSTIC FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_DIAGNOSTIC_ID)
+    {
+        process_bms_diagnostic_packet((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // VOLTAGE FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_VOLTAGE_ID)
+    {
+        process_bms_voltage_packet((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // MODULE TEMPERATURE FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_MODULE_TEMPERATURE)
+    {
+        process_bms_module_temp_can((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // CELL TEMPERATURE FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_CELL_TEMPERATURE)
+    {
+        process_bms_temp_packet((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // CELL BALANCING RATE FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_CELL_BALANCING_RATE)
+    {
+        process_bms_cell_temp_balancing_rate_can((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // STATE OF CHARGE FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_STATE_OF_CHARGE)
+    {
+        process_bms_state_of_charge_can((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // CONTACTOR CONTROL FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_CONTACTOR_CONTROL)
+    {
+        process_bms_contactor_control_can((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // ENERGY PARAMETERS FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_ENERGY_PARAM)
+    {
+        process_bms_energy_param_can((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // STATISTICS FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_STATS)
+    {
+        process_bms_stats_can((uint8_t *)data);
+    }
+
+    // ----------------------------
+    // EVENTS FRAME
+    // ----------------------------
+    else if (canID == CAN_BMS_EVENTS)
+    {
+        process_bms_events_can((uint8_t *)data);
+    }
+
+}
+
 _Bool isBmsCanId(uint32_t canID)
 {
 	return ((canID == CAN_BMS_OVERALL_ID) || (canID == CAN_BMS_DIAGNOSTIC_ID) || (canID == CAN_BMS_VOLTAGE_ID)
@@ -502,115 +596,115 @@ void process_bms_events_can(uint8_t * Data) {
 		{
 		case NO_EVENT:
 			// No event, so no action needed
-			break;
-		case BMS_STARTED:
-			logMessage("The BMS has started.", true);
-			break;
-		case LOST_COMM_TO_CELLS:
-			logMessage("Lost communication to the cells.", true);
-			break;
-		case ESTABLISH_COMM_TO_CELLS:
-			logMessage("", true);
-			break;
-		case CELL_VOLT_CRIT_LOW:
-			logMessage("Cell voltage is CRITICALLY LOW.", true);
-			break;
-		case CRIT_LOW_VOLTAGE_RECOVERED:
-			logMessage("Critically low voltage recovered.", true);
-			break;
-		case CELL_VOLT_CRIT_HIGH:
-			logMessage("Cell voltage is CRITICALLY HIGH.", true);
-			break;
-		case CRIT_HIGH_VOLTAGE_RECOVERED:
-			logMessage("Critically high voltage recovered.", true);
-			break;
-		case DISCHARGE_CURR_CRIT_HIGH:
-			logMessage("Discharge current is CRITICALLY HIGH.", true);
-			break;
-		case DISCHARGE_CRIT_HIGH_CURR_RECOVERED:
-			logMessage("Critically high discharge current recovered.", true);
-			break;
-		case CHARGE_CURR_CRIT_HIGH:
-			logMessage("Charge current CRITICALLY HIGH.", true);
-			break;
-		case CHARGE_CRIT_HIGH_CURR_RECOVERED:
-			logMessage("Critically high charge current recovered.", true);
-			break;
-		case CELL_MODULE_TEMP_CRIT_HIGH:
-			logMessage("Cell module temperature CRITICALLY HIGH.", true);
-			break;
-		case CRIT_HIGH_CELL_MODULE_TEMP_RECOVERED:
-			logMessage("Critically high cell module temperature recovered.", true);
-			break;
-		case LEAKAGE_DETECTED:
-			logMessage("Leakage detected.", true);
-			break;
-		case LEAKAGE_RECOVERED:
-			logMessage("Leakage recovered.", true);
-			break;
-		case LOW_VOLT_REDUCING_POWER_WARNING:
-			logMessage("Low voltage reducing power WARNING.", true);
-			break;
-		case POWER_REDUCTION_FROM_LOW_VOLT_RECOVERED:
-			logMessage("Power reduction from low voltage recovered.", true);
-			break;
-		case HIGH_CURR_REDUCING_POWER_WARNING:
-			logMessage("High current reducing power WARNING.", true);
-			break;
-		case POWER_REDUCTION_FROM_HIGH_CURR_RECOVERED:
-			logMessage("Power reduction from high current recovered.", true);
-			break;
-		case HIGH_CELL_MODULE_TEMP_REDUCING_POWER_WARNING:
-			logMessage("High cell module temperature reducting power WARNING.", true);
-			break;
-		case POWER_REDUCTION_FROM_HIGH_CELL_MODULE_TEMP_RECOVERED:
-			logMessage("Power reduction from high cell module temperature recovered.", true);
-			break;
-		case CHARGER_CONNECTED:
-			logMessage("Charger connected.", true);
-			break;
-		case CHARGER_DISCONNECTED:
-			logMessage("Charger disconnected.", true);
-			break;
-		case STARTED_PREHEAT_STAGE:
-			logMessage("Started the preheat stage.", true);
-			break;
-		case STARTED_PRECHARGE_STAGE:
-			logMessage("Started teh precharge stage.", true);
-			break;
-		case STARTED_MAIN_CHARGING_STAGE:
-			logMessage("Started main charging stage.", true);
-			break;
-		case STARTED_BALANCING_STAGE:
-			logMessage("Started balancing stage.", true);
-			break;
-		case CHARGING_FINISHED:
-			logMessage("Charging finished.", true);
-			break;
-		case CHARGING_ERROR_OCCURRED:
-			logMessage("Charging error occurred", true);
-			break;
-		case RETRYING_CHARGING:
-			logMessage("Retrying charging.", true);
-			break;
-		case RESTARTING_CHARGING:
-			logMessage("Restarting charging.", true);
-			break;
-		case CELL_TEMP_CRIT_HIGH:
-			logMessage("Cell temperature CRITICALLY HIGH.", true);
-			break;
-		case CRIT_HIGH_CELL_TEMP_RECOVERED:
-			logMessage("Critically high cell temperature recovered.", true);
-			break;
-		case HIGH_CELL_TEMP_REDUCING_POWER_WARNING:
-			logMessage("High cell temperature reducing power WARNING.", true);
-			break;
-		case POWER_REDUCTION_FROM_HIGH_CELL_TEMP_RECOVERED:
-			logMessage("Power reduction from high cell temperature recovered.", true);
-			break;
-		default:
-			logMessage("Default case reached.", true);
-			break;
+//			break;
+//		case BMS_STARTED:
+//			logMessage("The BMS has started.", true);
+//			break;
+//		case LOST_COMM_TO_CELLS:
+//			logMessage("Lost communication to the cells.", true);
+//			break;
+//		case ESTABLISH_COMM_TO_CELLS:
+//			logMessage("", true);
+//			break;
+//		case CELL_VOLT_CRIT_LOW:
+//			logMessage("Cell voltage is CRITICALLY LOW.", true);
+//			break;
+//		case CRIT_LOW_VOLTAGE_RECOVERED:
+//			logMessage("Critically low voltage recovered.", true);
+//			break;
+//		case CELL_VOLT_CRIT_HIGH:
+//			logMessage("Cell voltage is CRITICALLY HIGH.", true);
+//			break;
+//		case CRIT_HIGH_VOLTAGE_RECOVERED:
+//			logMessage("Critically high voltage recovered.", true);
+//			break;
+//		case DISCHARGE_CURR_CRIT_HIGH:
+//			logMessage("Discharge current is CRITICALLY HIGH.", true);
+//			break;
+//		case DISCHARGE_CRIT_HIGH_CURR_RECOVERED:
+//			logMessage("Critically high discharge current recovered.", true);
+//			break;
+//		case CHARGE_CURR_CRIT_HIGH:
+//			logMessage("Charge current CRITICALLY HIGH.", true);
+//			break;
+//		case CHARGE_CRIT_HIGH_CURR_RECOVERED:
+//			logMessage("Critically high charge current recovered.", true);
+//			break;
+//		case CELL_MODULE_TEMP_CRIT_HIGH:
+//			logMessage("Cell module temperature CRITICALLY HIGH.", true);
+//			break;
+//		case CRIT_HIGH_CELL_MODULE_TEMP_RECOVERED:
+//			logMessage("Critically high cell module temperature recovered.", true);
+//			break;
+//		case LEAKAGE_DETECTED:
+//			logMessage("Leakage detected.", true);
+//			break;
+//		case LEAKAGE_RECOVERED:
+//			logMessage("Leakage recovered.", true);
+//			break;
+//		case LOW_VOLT_REDUCING_POWER_WARNING:
+//			logMessage("Low voltage reducing power WARNING.", true);
+//			break;
+//		case POWER_REDUCTION_FROM_LOW_VOLT_RECOVERED:
+//			logMessage("Power reduction from low voltage recovered.", true);
+//			break;
+//		case HIGH_CURR_REDUCING_POWER_WARNING:
+//			logMessage("High current reducing power WARNING.", true);
+//			break;
+//		case POWER_REDUCTION_FROM_HIGH_CURR_RECOVERED:
+//			logMessage("Power reduction from high current recovered.", true);
+//			break;
+//		case HIGH_CELL_MODULE_TEMP_REDUCING_POWER_WARNING:
+//			logMessage("High cell module temperature reducting power WARNING.", true);
+//			break;
+//		case POWER_REDUCTION_FROM_HIGH_CELL_MODULE_TEMP_RECOVERED:
+//			logMessage("Power reduction from high cell module temperature recovered.", true);
+//			break;
+//		case CHARGER_CONNECTED:
+//			logMessage("Charger connected.", true);
+//			break;
+//		case CHARGER_DISCONNECTED:
+//			logMessage("Charger disconnected.", true);
+//			break;
+//		case STARTED_PREHEAT_STAGE:
+//			logMessage("Started the preheat stage.", true);
+//			break;
+//		case STARTED_PRECHARGE_STAGE:
+//			logMessage("Started teh precharge stage.", true);
+//			break;
+//		case STARTED_MAIN_CHARGING_STAGE:
+//			logMessage("Started main charging stage.", true);
+//			break;
+//		case STARTED_BALANCING_STAGE:
+//			logMessage("Started balancing stage.", true);
+//			break;
+//		case CHARGING_FINISHED:
+//			logMessage("Charging finished.", true);
+//			break;
+//		case CHARGING_ERROR_OCCURRED:
+//			logMessage("Charging error occurred", true);
+//			break;
+//		case RETRYING_CHARGING:
+//			logMessage("Retrying charging.", true);
+//			break;
+//		case RESTARTING_CHARGING:
+//			logMessage("Restarting charging.", true);
+//			break;
+//		case CELL_TEMP_CRIT_HIGH:
+//			logMessage("Cell temperature CRITICALLY HIGH.", true);
+//			break;
+//		case CRIT_HIGH_CELL_TEMP_RECOVERED:
+//			logMessage("Critically high cell temperature recovered.", true);
+//			break;
+//		case HIGH_CELL_TEMP_REDUCING_POWER_WARNING:
+//			logMessage("High cell temperature reducing power WARNING.", true);
+//			break;
+//		case POWER_REDUCTION_FROM_HIGH_CELL_TEMP_RECOVERED:
+//			logMessage("Power reduction from high cell temperature recovered.", true);
+//			break;
+//		default:
+//			logMessage("Default case reached.", true);
+//			break;
 		}
 	}
 	else // Else we have an event timestamp
@@ -695,74 +789,74 @@ float bms_getAverageVoltage() {
  */
 
 void bms_handleChargingError(uint8_t cErrorByte){
-	switch(cErrorByte){
-	case 1:
-		logMessage("Cell communication lost at start of charging", true);
-		break;
-	case 2:
-		logMessage("No cell communication (non-can charging)", true);
-		break;
-	case 3:
-		logMessage("Charging stage timeout", true);
-		break;
-	case 4:
-		logMessage("No cell communication (non-can charging)", true);
-		break;
-	case 5:
-		logMessage("Cannot set cell balancing threshold", true);
-		break;
-	case 6:
-		logMessage("Cell or cell module temperature too high", true);
-		break;
-	case 7:
-		logMessage("Cell communication lost during pre-heating stage", true);
-		break;
-	case 8:
-		logMessage("Number of cells mismatch", true);
-		break;
-	case 9:
-		logMessage("Cell over-voltage", true);
-		break;
-	case 10:
-		logMessage("Cell protection event occurred, check diagnostic codes", true);
-		//Need to check diagnostic codes or handled already?
-		break;
-	default:
-		break;
-	}
+//	switch(cErrorByte){
+//	case 1:
+//		logMessage("Cell communication lost at start of charging", true);
+//		break;
+//	case 2:
+//		logMessage("No cell communication (non-can charging)", true);
+//		break;
+//	case 3:
+//		logMessage("Charging stage timeout", true);
+//		break;
+//	case 4:
+//		logMessage("No cell communication (non-can charging)", true);
+//		break;
+//	case 5:
+//		logMessage("Cannot set cell balancing threshold", true);
+//		break;
+//	case 6:
+//		logMessage("Cell or cell module temperature too high", true);
+//		break;
+//	case 7:
+//		logMessage("Cell communication lost during pre-heating stage", true);
+//		break;
+//	case 8:
+//		logMessage("Number of cells mismatch", true);
+//		break;
+//	case 9:
+//		logMessage("Cell over-voltage", true);
+//		break;
+//	case 10:
+//		logMessage("Cell protection event occurred, check diagnostic codes", true);
+//		//Need to check diagnostic codes or handled already?
+//		break;
+//	default:
+//		break;
+//	}
 }
 
 void bms_handleProtectionFlags(uint16_t Flags){
-	if (bms_checkBit16(Flags, 0)){
-		logMessage("Under-voltage – some cell is below critical minimum voltage.", true);
-	}
-	if (bms_checkBit16(Flags, 1)){
-		logMessage("Over-voltage – some cell is above critical maximum voltage.", true);
-	}
-	if (bms_checkBit16(Flags, 2)){
-		logMessage("Discharge Over-current – discharge current (negative current) exceeds the critical discharge current setting.", true);
-	}
-	if (bms_checkBit16(Flags, 3)){
-		logMessage("Charge Over-current – charge current (positive current) exceeds the critical charge current setting.", true);
-	}
-	if (bms_checkBit16(Flags, 4)){
-		logMessage("Cell Module Overheat – cell module temperature exceeds maximum critical temperature setting.", true);
-	}
-	if (bms_checkBit16(Flags, 5)){
-		logMessage("Leakage – leakage signal was detected on leakage input pin.", true);
-	}
-	if (bms_checkBit16(Flags, 6)){
-		logMessage("No Cell Communication – loss of communication to cells.", true);
-	}
-	if (bms_checkBit16(Flags, 11)){
-		logMessage("Cell Overheat – cell temperature exceeds maximum cell temperature threshold", true);
-	}
-	if (bms_checkBit16(Flags, 12)){
-		logMessage("No Current Sensor", true);
-	}
-	if (bms_checkBit16(Flags, 13)){
-		logMessage("Pack Under-Voltage", true);
-	}
+//	if (bms_checkBit16(Flags, 0)){
+//		logMessage("Under-voltage – some cell is below critical minimum voltage.", true);
+//	}
+//	if (bms_checkBit16(Flags, 1)){
+//		logMessage("Over-voltage – some cell is above critical maximum voltage.", true);
+//	}
+//	if (bms_checkBit16(Flags, 2)){
+//		logMessage("Discharge Over-current – discharge current (negative current) exceeds the critical discharge current setting.", true);
+//	}
+//	if (bms_checkBit16(Flags, 3)){
+//		logMessage("Charge Over-current – charge current (positive current) exceeds the critical charge current setting.", true);
+//	}
+//	if (bms_checkBit16(Flags, 4)){
+//		logMessage("Cell Module Overheat – cell module temperature exceeds maximum critical temperature setting.", true);
+//	}
+//	if (bms_checkBit16(Flags, 5)){
+//		logMessage("Leakage – leakage signal was detected on leakage input pin.", true);
+//	}
+//	if (bms_checkBit16(Flags, 6)){
+//		logMessage("No Cell Communication – loss of communication to cells.", true);
+//	}
+//	if (bms_checkBit16(Flags, 11)){
+//		logMessage("Cell Overheat – cell temperature exceeds maximum cell temperature threshold", true);
+//	}
+//	if (bms_checkBit16(Flags, 12)){
+//		logMessage("No Current Sensor", true);
+//	}
+//	if (bms_checkBit16(Flags, 13)){
+//		logMessage("Pack Under-Voltage", true);
+//	}
 }
 
 int bms_checkBit16(uint16_t bytes, int n){
