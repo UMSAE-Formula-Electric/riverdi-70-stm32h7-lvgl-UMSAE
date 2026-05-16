@@ -64,7 +64,8 @@ typedef struct {
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
-static can_driver_t *g_can;
+static can_driver_t *g_can1;
+static can_driver_t *g_can2;
 
 /*
  *	Queue Definitions
@@ -98,12 +99,37 @@ const osThreadAttr_t vehicleStateTask_attributes = {
     .priority = (osPriority_t) osPriorityAboveNormal,
 };
 
+/*
+ *  CAN 2 (Sensor/Telemetry) Queue Definition
+ */
+osMessageQueueId_t can2QueueHandle;
+const osMessageQueueAttr_t can2QueueHandle_attributes = {
+    .name = "can2Queue"
+};
+
+/*
+ *  CAN 2 OS Thread Definitions
+ */
+osThreadId_t can2TaskHandle;
+const osThreadAttr_t can2Task_attributes = {
+  .name = "can2Task",
+  .stack_size = 512 * 2,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t sensorStateTaskHandle;
+const osThreadAttr_t sensorStateTask_attributes = {
+    .name = "sensorStateTask",
+    .stack_size = 512 * 2,
+    .priority = (osPriority_t) osPriorityNormal,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 512 * 2,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -112,6 +138,9 @@ const osThreadAttr_t defaultTask_attributes = {
 void LVGLTimer(void *argument);
 void StartCANTask(void *argument);
 void StartVehicleStateTask(void *argument);
+
+void StartCAN2Task(void *argument);
+void StartSensorStateTask(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -154,10 +183,17 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-	g_can = can_port_create();
+	g_can1 = can_port_create(1);
+	if (g_can1 != NULL) {
+		can_init(g_can1);
+		can_start(g_can1);
+	}
 
-	can_init(g_can);
-	can_start(g_can);
+	g_can2 = can_port_create(2);
+	if (g_can2 != NULL) {
+		can_init(g_can2);
+		can_start(g_can2);
+	}
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -175,17 +211,21 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
 	canQueueHandle = osMessageQueueNew(10,sizeof(can_frame_t),NULL);
+	can2QueueHandle = osMessageQueueNew(10, sizeof(can_frame_t), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 	lvglTimerHandle = osThreadNew(LVGLTimer, NULL, &lvglTimer_attributes);
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
 	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
+
+    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
+    sensorStateTaskHandle = osThreadNew(StartSensorStateTask, NULL, &sensorStateTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -244,7 +284,7 @@ void StartDefaultTask(void *argument)
 	  tx_frame.data[7] = delta_resolver & 0xFF;
 
 	  // Send the CAN frame
-	  if (can_send(g_can, &tx_frame, 100) == CAN_OK) {
+	  if (can_send(g_can1, &tx_frame, 100) == CAN_OK) {
 		  // Frame sent successfully
 		  //TODO Add logging here for success
 	  } else {
@@ -301,7 +341,7 @@ void StartCANTask(void *argument)
 
     for (;;)
     {
-        if (can_receive(g_can, &frame, portMAX_DELAY) == CAN_OK)
+        if (can_receive(g_can1, &frame, portMAX_DELAY) == CAN_OK)
         {
         	osMessageQueuePut(canQueueHandle, &frame,0,0);
         }
@@ -377,6 +417,43 @@ void StartVehicleStateTask(void *argument)
 
                     VehicleState_SetWattage(watts);
                 	break;
+
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+void StartCAN2Task(void *argument)
+{
+    can_frame_t frame;
+
+    for (;;)
+    {
+        if (can_receive(g_can2, &frame, portMAX_DELAY) == CAN_OK)
+        {
+            osMessageQueuePut(can2QueueHandle, &frame, 0, 0);
+        }
+        osDelay(1);
+    }
+}
+
+void StartSensorStateTask(void *argument)
+{
+    can_frame_t frame;
+
+    for (;;)
+    {
+        if (osMessageQueueGet(can2QueueHandle, &frame, NULL, portMAX_DELAY) == osOK)
+        {
+            switch (frame.id)
+            {
+                case 0x400:
+                    break;
+
+                case 0x500:
+                    break;
 
                 default:
                     break;
