@@ -98,6 +98,31 @@ const osThreadAttr_t vehicleStateTask_attributes = {
     .priority = (osPriority_t) osPriorityAboveNormal,
 };
 
+/*
+ *  CAN 2 (Sensor/Telemetry) Queue Definition
+ */
+osMessageQueueId_t can2QueueHandle;
+const osMessageQueueAttr_t can2QueueHandle_attributes = {
+    .name = "can2Queue"
+};
+
+/*
+ *  CAN 2 OS Thread Definitions
+ */
+osThreadId_t can2TaskHandle;
+const osThreadAttr_t can2Task_attributes = {
+  .name = "can2Task",
+  .stack_size = 512 * 2,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t sensorStateTaskHandle;
+const osThreadAttr_t sensorStateTask_attributes = {
+    .name = "sensorStateTask",
+    .stack_size = 512 * 2,
+    .priority = (osPriority_t) osPriorityNormal,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -112,6 +137,9 @@ const osThreadAttr_t defaultTask_attributes = {
 void LVGLTimer(void *argument);
 void StartCANTask(void *argument);
 void StartVehicleStateTask(void *argument);
+
+void StartCAN2Task(void *argument);
+void StartSensorStateTask(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -182,6 +210,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
 	canQueueHandle = osMessageQueueNew(10,sizeof(can_frame_t),NULL);
+	can2QueueHandle = osMessageQueueNew(10, sizeof(can_frame_t), NULL);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -193,6 +222,9 @@ void MX_FREERTOS_Init(void) {
 	lvglTimerHandle = osThreadNew(LVGLTimer, NULL, &lvglTimer_attributes);
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
 	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
+
+    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
+    sensorStateTaskHandle = osThreadNew(StartSensorStateTask, NULL, &sensorStateTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -352,6 +384,43 @@ void StartVehicleStateTask(void *argument)
                 		//TODO Handling for the car state changes.
                 	}
                 	break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+void StartCAN2Task(void *argument)
+{
+    can_frame_t frame;
+
+    for (;;)
+    {
+        if (can_receive(g_can2, &frame, portMAX_DELAY) == CAN_OK)
+        {
+            osMessageQueuePut(can2QueueHandle, &frame, 0, 0);
+        }
+        osDelay(1);
+    }
+}
+
+void StartSensorStateTask(void *argument)
+{
+    can_frame_t frame;
+
+    for (;;)
+    {
+        if (osMessageQueueGet(can2QueueHandle, &frame, NULL, portMAX_DELAY) == osOK)
+        {
+            switch (frame.id)
+            {
+                case 0x400:
+                    break;
+
+                case 0x500:
+                    break;
+
                 default:
                     break;
             }
