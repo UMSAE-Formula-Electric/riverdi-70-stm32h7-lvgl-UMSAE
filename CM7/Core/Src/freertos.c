@@ -63,7 +63,8 @@ typedef struct {
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
-static can_driver_t *g_can;
+static can_driver_t *g_can1;
+static can_driver_t *g_can2;
 
 /*
  *	Queue Definitions
@@ -102,7 +103,7 @@ const osThreadAttr_t vehicleStateTask_attributes = {
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 512 * 2,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -153,10 +154,17 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-	g_can = can_port_create();
+	g_can1 = can_port_create(1);
+	if (g_can1 != NULL) {
+		can_init(g_can1);
+		can_start(g_can1);
+	}
 
-	can_init(g_can);
-	can_start(g_can);
+	g_can2 = can_port_create(2);
+	if (g_can2 != NULL) {
+		can_init(g_can2);
+		can_start(g_can2);
+	}
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -178,7 +186,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -243,7 +251,7 @@ void StartDefaultTask(void *argument)
 	  tx_frame.data[7] = delta_resolver & 0xFF;
 
 	  // Send the CAN frame
-	  if (can_send(g_can, &tx_frame, 100) == CAN_OK) {
+	  if (can_send(g_can1, &tx_frame, 100) == CAN_OK) {
 		  // Frame sent successfully
 		  //TODO Add logging here for success
 	  } else {
@@ -299,7 +307,7 @@ void StartCANTask(void *argument)
 
     for (;;)
     {
-        if (can_receive(g_can, &frame, portMAX_DELAY) == CAN_OK)
+        if (can_receive(g_can1, &frame, portMAX_DELAY) == CAN_OK)
         {
         	osMessageQueuePut(canQueueHandle, &frame,0,0);
         }

@@ -2,3 +2,7 @@
 	path = Middlewares/Third_Party/LVGL/lvgl
 	url = https://github.com/lvgl/lvgl.git
 	branch = release/v8.3
+
+[submodule "Firmware-Library"]
+	path = Firmware-Library
+	url = git@github.com:UMSAE-Formula-Electric/Firmware-Library.git
