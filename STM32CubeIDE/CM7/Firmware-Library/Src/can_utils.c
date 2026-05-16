@@ -43,10 +43,10 @@ uint8_t sendCan(uint32_t dest, const uint8_t *data, uint32_t length, uint32_t ca
     can_status_t status = can_send(g_can_drv, &frame, 100);
 
     if (status == CAN_TIMEOUT) {
-        logMessage("Error: CAN Send Timeout\r\n", false);
+        //logMessage("Error: CAN Send Timeout\r\n", false);
         return 1;
     } else if (status != CAN_OK) {
-        logMessage("Error: CAN Driver Failure\r\n", false);
+        //logMessage("Error: CAN Driver Failure\r\n", false);
         return 4;
     }
 

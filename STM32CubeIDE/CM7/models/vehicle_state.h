@@ -61,8 +61,8 @@ void VehicleState_SetState(uint8_t state);
 
 /** @name Battery Metric Setters */
 /** @{ */
-void VehicleState_SetPackVoltage(uint8_t voltage);
-void VehicleState_SetPackCurrent(uint8_t current);
+void VehicleState_SetPackVoltage(uint16_t voltage);
+void VehicleState_SetPackCurrent(uint16_t current);
 void VehicleState_SetSOC(uint8_t soc);
 void VehicleState_SetWattage(uint8_t wattage);
 void VehicleState_SetCellMax(uint8_t cellmax);
@@ -74,34 +74,34 @@ void VehicleState_SetCellMin(uint8_t cellmin);
  * @brief Retrieves the current motor RPM.
  * @return uint8_t Current RPM value.
  */
-uint8_t VehicleState_GetRPM(void);
+uint16_t VehicleState_GetRPM(void);
 
 /**
  * @brief Retrieves the current vehicle speed.
- * @return uint8_t Speed in km/h (or configured units).
+ * @return uint16_t Speed in km/h (or configured units).
  */
-uint8_t VehicleState_GetSpeed(void);
+uint16_t VehicleState_GetSpeed(void);
 
 /**
  * @brief Retrieves the current power output.
- * @return uint8_t Power percentage or scaled value.
+ * @return uint16_t Power percentage or scaled value.
  */
-uint8_t VehicleState_GetPower(void);
+uint16_t VehicleState_GetPower(void);
 
-uint8_t VehicleState_GetThrottle(void);
-uint8_t VehicleState_GetBrake(void);
-uint8_t VehicleState_GetState(void);
-uint8_t VehicleState_GetPackVoltage(void);
-uint8_t VehicleState_GetPackCurrent(void);
+uint16_t VehicleState_GetThrottle(void);
+uint16_t VehicleState_GetBrake(void);
+uint16_t VehicleState_GetState(void);
+uint16_t VehicleState_GetPackVoltage(void);
+uint16_t VehicleState_GetPackCurrent(void);
 
 /**
  * @brief Retrieves the Battery State of Charge (SOC).
- * @return uint8_t Percentage (0-100).
+ * @return uint16_t Percentage (0-100).
  */
-uint8_t VehicleState_GetSOC(void);
+uint16_t VehicleState_GetSOC(void);
 
-uint8_t VehicleState_GetWattage(void);
-uint8_t VehicleState_GetCellMax(void);
-uint8_t VehicleState_GetCellMin(void);
+uint32_t VehicleState_GetWattage(void);
+uint16_t VehicleState_GetCellMax(void);
+uint16_t VehicleState_GetCellMin(void);
 
 #endif

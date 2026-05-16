@@ -12,16 +12,20 @@
 struct vehicleState {
     uint16_t rpm;
     uint16_t speed;
-    uint8_t power;
-    uint8_t Throttle;
+
+    int16_t powerKW;       // signed for regen
+    uint8_t throttle;
     uint8_t brake;
     uint8_t state;
-    uint8_t packVoltage;
-    uint8_t packCurrent;
+
+    uint16_t packVoltage;  // volts
+    int16_t packCurrent;   // signed amps
+
     uint8_t SOC;
-    uint8_t wattage;
-    uint8_t cellmax;
-    uint8_t cellmin;
+
+    int32_t wattage;       // actual watts
+    uint16_t cellmax;
+    uint16_t cellmin;
 };
 
 static vehicleState_t g_vehicleState;
@@ -67,12 +71,12 @@ void VehicleState_SetSpeed(uint16_t speed)
 
 void VehicleState_SetPower(uint8_t power)
 {
-    g_vehicleState.power = power;
+    g_vehicleState.powerKW = power;
 }
 
 void VehicleState_SetThrottle(uint8_t throttle)
 {
-    g_vehicleState.Throttle = throttle;
+    g_vehicleState.throttle = throttle;
 }
 
 void VehicleState_SetBrake(uint8_t brake)
@@ -85,12 +89,12 @@ void VehicleState_SetState(uint8_t state)
     g_vehicleState.state = state;
 }
 
-void VehicleState_SetPackVoltage(uint8_t voltage)
+void VehicleState_SetPackVoltage(uint16_t voltage)
 {
     g_vehicleState.packVoltage = voltage;
 }
 
-void VehicleState_SetPackCurrent(uint8_t current)
+void VehicleState_SetPackCurrent(uint16_t current)
 {
     g_vehicleState.packCurrent = current;
 }
@@ -117,15 +121,15 @@ void VehicleState_SetCellMin(uint8_t cellmin)
 
 /* ================= Getters ================= */
 
-uint8_t VehicleState_GetRPM(void)         { return g_vehicleState.rpm; }
-uint8_t VehicleState_GetSpeed(void)       { return g_vehicleState.speed; }
-uint8_t VehicleState_GetPower(void)       { return g_vehicleState.power; }
-uint8_t VehicleState_GetThrottle(void)    { return g_vehicleState.Throttle; }
-uint8_t VehicleState_GetBrake(void)       { return g_vehicleState.brake; }
-uint8_t VehicleState_GetState(void)       { return g_vehicleState.state; }
-uint8_t VehicleState_GetPackVoltage(void) { return g_vehicleState.packVoltage; }
-uint8_t VehicleState_GetPackCurrent(void) { return g_vehicleState.packCurrent; }
-uint8_t VehicleState_GetSOC(void)         { return g_vehicleState.SOC; }
-uint8_t VehicleState_GetWattage(void)     { return g_vehicleState.wattage; }
-uint8_t VehicleState_GetCellMax(void)     { return g_vehicleState.cellmax; }
-uint8_t VehicleState_GetCellMin(void)     { return g_vehicleState.cellmin; }
+uint16_t VehicleState_GetRPM(void)         { return g_vehicleState.rpm; }
+uint16_t VehicleState_GetSpeed(void)       { return g_vehicleState.speed; }
+uint16_t VehicleState_GetPower(void)       { return g_vehicleState.powerKW; }
+uint16_t VehicleState_GetThrottle(void)    { return g_vehicleState.throttle; }
+uint16_t VehicleState_GetBrake(void)       { return g_vehicleState.brake; }
+uint16_t VehicleState_GetState(void)       { return g_vehicleState.state; }
+uint16_t VehicleState_GetPackVoltage(void) { return g_vehicleState.packVoltage; }
+uint16_t VehicleState_GetPackCurrent(void) { return g_vehicleState.packCurrent; }
+uint16_t VehicleState_GetSOC(void)         { return g_vehicleState.SOC; }
+uint32_t VehicleState_GetWattage(void)     { return g_vehicleState.wattage; }
+uint16_t VehicleState_GetCellMax(void)     { return g_vehicleState.cellmax; }
+uint16_t VehicleState_GetCellMin(void)     { return g_vehicleState.cellmin; }

@@ -266,7 +266,7 @@ float mc_get_current_C(){
 }
 
 float mc_getBusCurrent() {
-	return (float)bus_current * 10;
+	return (float)bus_current / 10;
 }
 
 float mc_getBusVoltage() {

@@ -32,6 +32,7 @@
 #include "can_port.h"
 #include "vehicle_state.h"
 #include "motor_controller_can_utils.h"
+#include "bms_can_utils.h"
 #include "can_utils.h"
 #include "dashboard_ui.h"
 /* USER CODE END Includes */
@@ -275,11 +276,12 @@ void LVGLTimer(void *argument)
         DashboardUI_SetSpeed(VehicleState_GetSpeed());
         DashboardUI_SetRPM(VehicleState_GetRPM());
         DashboardUI_SetBrake(VehicleState_GetBrake());
-        DashboardUI_SetPower(VehicleState_GetPower());
+        DashboardUI_SetPower(VehicleState_GetWattage());
         DashboardUI_SetThrottle(VehicleState_GetThrottle());
         DashboardUI_SetSOC(VehicleState_GetSOC());
         DashboardUI_SetDegree(0);
         DashboardUI_SetTempGauge(0);
+        DashboardUI_SetVehicleState(VehicleState_GetState());
 
         lv_timer_handler();
         osDelay(20);
@@ -320,12 +322,13 @@ void StartVehicleStateTask(void *argument)
     can_frame_t frame;
     uint16_t rpm;
     uint16_t speed;
-
+    uint32_t watts;
     VehicleState_Init();
 
     //TODO This task will get out of hand quickly. The approach needs to change otherwise this will become difficult to maintain.
     for (;;)
     {
+    	bms_request_state_of_charge_parameters();
         if (osMessageQueueGet(canQueueHandle, &frame, NULL, portMAX_DELAY) == osOK)
         {
             switch (frame.id)
@@ -339,11 +342,42 @@ void StartVehicleStateTask(void *argument)
                     speed = (uint16_t)(rpm * 0.075861f);
                     VehicleState_SetSpeed(speed);
                     break;
-                case CAN_ACU_TO_VCU_ID:
-                	if(frame.data == CAN_ACB_TSA_ACK || frame.data == CAN_ACB_RTD_ACK || frame.data == CAN_GO_IDLE_REQ){
-                		//TODO Handling for the car state changes.
+                case 22:
+                	if(frame.data[0] == CAN_ACB_TSA_ACK ||
+                	   frame.data[0] == CAN_ACB_RTD_ACK ||
+                	   frame.data[0] == CAN_GO_IDLE_REQ)
+                	{
+                		VehicleState_SetState(frame.data[0]);
                 	}
                 	break;
+                case CAN_BMS_STATE_OF_CHARGE:
+                	process_bms_state_of_charge_can(frame.data);
+                	VehicleState_SetSOC(get_bms_estimated_state_of_charge());
+                	bms_request_state_of_charge_parameters();
+                	break;
+                case CAN_MC_RX_CURRENT_ID:
+                    mc_process_current_can(frame.data);
+
+                    float current = mc_getBusCurrent();
+
+                    VehicleState_SetPackCurrent((int16_t)current);
+
+                    watts = (int32_t)(mc_getBusVoltage() * current);
+
+                    VehicleState_SetWattage(watts);
+
+                	break;
+                case CAN_MC_RX_VOLT_ID:
+                    mc_process_volt_can(frame.data);
+
+                    VehicleState_SetPackVoltage(
+                        (uint16_t)mc_getBusVoltage());
+
+                    watts = (int32_t)(mc_getBusVoltage() * mc_getBusCurrent());
+
+                    VehicleState_SetWattage(watts);
+                	break;
+
                 default:
                     break;
             }
