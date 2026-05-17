@@ -35,7 +35,6 @@
 #include "can_utils.h"
 #include "dashboard_ui.h"
 #include "can_router.h"
-
 #include "vehicle_state.h"
 /* USER CODE END Includes */
 
@@ -71,10 +70,6 @@ static can_driver_t *g_can;
 /*
  *	Queue Definitions
  */
-//osMessageQueueId_t canQueueHandle;
-//const osMessageQueueAttr_t canQueueHandle_attributes = {
-//		.name = "canQueue"
-//};
 
 /*
  *	OS thread Definitions
@@ -177,7 +172,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-//	canQueueHandle = osMessageQueueNew(10,sizeof(can_frame_t),NULL);
+s
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -301,9 +296,6 @@ void LVGLTimer(void *argument)
 void StartCANTask(void *argument)
 {
     can_frame_t frame;
-    uint16_t rpm;
-    uint16_t speed;
-    uint32_t watts;
     VehicleState_Init();
 
     for (;;)

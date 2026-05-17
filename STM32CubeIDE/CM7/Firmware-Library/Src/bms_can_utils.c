@@ -127,6 +127,30 @@ void init_bms(void){
 
 }
 
+/**
+ * @brief Processes incoming BMS CAN messages.
+ * @details
+ * Routes Battery Management System (BMS) CAN frames to the
+ * appropriate packet parser or handler based on the received
+ * CAN identifier.
+ *
+ * Supported message types include:
+ * - Overall system status
+ * - Diagnostic information
+ * - Voltage telemetry
+ * - Temperature telemetry
+ * - Cell balancing information
+ * - State of charge data
+ * - Contactor control status
+ * - Energy parameters
+ * - Statistical data
+ * - Event and fault reporting
+ *
+ * Frames with unsupported CAN IDs are ignored.
+ *
+ * @param[in] canID Received CAN message identifier.
+ * @param[in] data  Pointer to the 8-byte CAN payload buffer.
+ */
 void BMS_Process(uint32_t canID, const uint8_t data[8])
 {
     if (data == NULL) return;

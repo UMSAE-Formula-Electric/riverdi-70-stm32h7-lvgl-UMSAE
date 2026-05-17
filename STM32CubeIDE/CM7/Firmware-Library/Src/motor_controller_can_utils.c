@@ -160,7 +160,7 @@ void UpdateMCState(int16_t mc_trottle_val) {
 	}
 }
 
-void MotorController_Process(uint32_t can_id, const uint8_t data[8])
+void MotorController_Process(uint32_t can_id, uint8_t data[8])
 {
     switch (can_id)
     {
