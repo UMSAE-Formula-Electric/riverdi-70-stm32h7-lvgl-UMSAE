@@ -126,10 +126,8 @@ const osThreadAttr_t defaultTask_attributes = {
 /* USER CODE BEGIN FunctionPrototypes */
 void LVGLTimer(void *argument);
 void StartCANTask(void *argument);
-void StartVehicleStateTask(void *argument);
-
 void StartCAN2Task(void *argument);
-void StartSensorStateTask(void *argument);
+void StartVehicleStateTask(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -211,10 +209,8 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
 	lvglTimerHandle = osThreadNew(LVGLTimer, NULL, &lvglTimer_attributes);
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
-	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
-
     can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
-    sensorStateTaskHandle = osThreadNew(StartSensorStateTask, NULL, &sensorStateTask_attributes);
+	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

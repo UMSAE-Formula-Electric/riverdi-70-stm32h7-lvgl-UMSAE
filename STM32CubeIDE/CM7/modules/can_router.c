@@ -7,14 +7,58 @@
 
 
 #include "can_router.h"
+#include "can_utils.h"
 #include "motor_controller_can_utils.h"
 #include "bms_can_utils.h"
+#include "car_state.h"
+
+static void handle_startup_state_msg(uint8_t msg)
+{
+    switch ((enum STARTUP_STATUS_NOTIFY_MSG)msg)
+    {
+        case CAN_GO_IDLE_REQ:
+            car_state_request(IDLE);
+            break;
+
+        case CAN_ACB_TSA_ACK:
+        	car_state_request(TRACTIVE_SYSTEM_ACTIVE);
+        case CAN_ACB_RTD_ACK:
+            car_state_request(READY_TO_DRIVE);
+            break;
+
+        case CAN_ACB_TSA_NACK:
+        case CAN_ACB_RTD_NACK:
+            break;
+
+        case CAN_NO_SAFETY_LOOP_SET:
+            car_state_request(ERROR_STATE);
+            break;
+
+        case CAN_NO_SAFETY_LOOP_CLEAR:
+            car_state_request(IDLE);
+            break;
+
+        default:
+            break;
+    }
+}
 
 void CAN_router(const can_frame_t *frame)
 {
+    /* ---------------- STATE TRANSITION / CONTROL PLANE ---------------- */
     switch (frame->id)
     {
-        /* ---------------- MOTOR CONTROLLER RANGE ---------------- */
+        case CAN_VCU_SET_ACB_STATE_ID:
+            handle_startup_state_msg(frame->data[0]);
+            return;
+
+        default:
+            break;
+    }
+
+    /* ---------------- MOTOR CONTROLLER RANGE ---------------- */
+    switch (frame->id)
+    {
         case CAN_MC_RX_TEMP1_ID:
         case CAN_MC_RX_TEMP2_ID:
         case CAN_MC_RX_TEMP3_ID:
@@ -32,12 +76,12 @@ void CAN_router(const can_frame_t *frame)
         case CAN_MC_RX_DIAGNOSTIC_DATA:
         case CAN_MC_RX_HIGHSPEED:
         case CAN_MC_RX_TORQUE_CAPABILITY:
-        	MotorController_Process(frame->id,frame->data);
+            MotorController_Process(frame->id, frame->data);
             break;
 
         /* ---------------- BMS ---------------- */
         case CAN_BMS_STATE_OF_CHARGE:
-        	BMS_Process(frame->id,frame->data);
+            BMS_Process(frame->id, frame->data);
             break;
 
         /* ---------------- IGNORE OR EXTEND ---------------- */
