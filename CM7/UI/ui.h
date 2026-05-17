@@ -23,6 +23,11 @@ extern "C" {
 // EVENTS
 extern lv_obj_t * ui____initial_actions0;
 
+// FONTS
+LV_FONT_DECLARE(ui_font_Aoto_Gothic_80);
+LV_FONT_DECLARE(ui_font_Aoto_Gothic_60);
+LV_FONT_DECLARE(ui_font_Aoto_Gothic_120);
+
 // UI INIT
 void ui_init(void);
 void ui_destroy(void);

@@ -136,25 +136,21 @@ void ui_DriverDisplay_screen_init(void)
 
     ui_CarStats = lv_obj_create(ui_BaseContainer);
     lv_obj_remove_style_all(ui_CarStats);
-    lv_obj_set_width(ui_CarStats, 857);
+    lv_obj_set_width(ui_CarStats, 889);
     lv_obj_set_height(ui_CarStats, LV_SIZE_CONTENT);    /// 500
-    lv_obj_set_x(ui_CarStats, 26);
-    lv_obj_set_y(ui_CarStats, 221);
+    lv_obj_set_x(ui_CarStats, -147);
+    lv_obj_set_y(ui_CarStats, 231);
     lv_obj_set_align(ui_CarStats, LV_ALIGN_CENTER);
     lv_obj_set_flex_flow(ui_CarStats, LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(ui_CarStats, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_remove_flag(ui_CarStats, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_obj_set_style_pad_left(ui_CarStats, 60, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(ui_CarStats, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(ui_CarStats, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(ui_CarStats, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_row(ui_CarStats, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_column(ui_CarStats, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_row(ui_CarStats, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_column(ui_CarStats, 70, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Power = lv_obj_create(ui_CarStats);
     lv_obj_remove_style_all(ui_Power);
-    lv_obj_set_width(ui_Power, 150);
     lv_obj_set_height(ui_Power, 250);
+    lv_obj_set_width(ui_Power, LV_SIZE_CONTENT);   /// 150
     lv_obj_set_x(ui_Power, -366);
     lv_obj_set_y(ui_Power, -49);
     lv_obj_set_align(ui_Power, LV_ALIGN_CENTER);
@@ -176,24 +172,29 @@ void ui_DriverDisplay_screen_init(void)
     lv_obj_set_height(ui_PowerBaseTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_PowerBaseTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_PowerBaseTag, "400");
-    lv_obj_set_style_text_font(ui_PowerBaseTag, &lv_font_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_PowerBaseTag, &ui_font_Aoto_Gothic_60, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_PowerSubTextTag = lv_label_create(ui_Power);
     lv_obj_set_width(ui_PowerSubTextTag, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_PowerSubTextTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_PowerSubTextTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_PowerSubTextTag, "kW");
+    lv_obj_set_style_text_font(ui_PowerSubTextTag, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Speed = lv_obj_create(ui_CarStats);
     lv_obj_remove_style_all(ui_Speed);
-    lv_obj_set_width(ui_Speed, 150);
     lv_obj_set_height(ui_Speed, 225);
+    lv_obj_set_width(ui_Speed, lv_pct(33));
     lv_obj_set_x(ui_Speed, 14);
     lv_obj_set_y(ui_Speed, -49);
     lv_obj_set_align(ui_Speed, LV_ALIGN_CENTER);
     lv_obj_set_flex_flow(ui_Speed, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(ui_Speed, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_remove_flag(ui_Speed, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_pad_left(ui_Speed, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_Speed, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_Speed, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_Speed, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_row(ui_Speed, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(ui_Speed, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -209,18 +210,19 @@ void ui_DriverDisplay_screen_init(void)
     lv_obj_set_height(ui_SpeedBaseTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_SpeedBaseTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_SpeedBaseTag, "80");
-    lv_obj_set_style_text_font(ui_SpeedBaseTag, &lv_font_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_SpeedBaseTag, &ui_font_Aoto_Gothic_120, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_SpeedSubTextTag = lv_label_create(ui_Speed);
     lv_obj_set_width(ui_SpeedSubTextTag, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_SpeedSubTextTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_SpeedSubTextTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_SpeedSubTextTag, "km/h");
+    lv_obj_set_style_text_font(ui_SpeedSubTextTag, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_RPM = lv_obj_create(ui_CarStats);
     lv_obj_remove_style_all(ui_RPM);
-    lv_obj_set_width(ui_RPM, 150);
     lv_obj_set_height(ui_RPM, 225);
+    lv_obj_set_width(ui_RPM, LV_SIZE_CONTENT);   /// 150
     lv_obj_set_x(ui_RPM, -366);
     lv_obj_set_y(ui_RPM, -49);
     lv_obj_set_align(ui_RPM, LV_ALIGN_CENTER);
@@ -242,18 +244,19 @@ void ui_DriverDisplay_screen_init(void)
     lv_obj_set_height(ui_MotorBaseTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_MotorBaseTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_MotorBaseTag, "400");
-    lv_obj_set_style_text_font(ui_MotorBaseTag, &lv_font_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_MotorBaseTag, &ui_font_Aoto_Gothic_60, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_MotorSubTextTag = lv_label_create(ui_RPM);
     lv_obj_set_width(ui_MotorSubTextTag, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_MotorSubTextTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_MotorSubTextTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_MotorSubTextTag, "RPM");
+    lv_obj_set_style_text_font(ui_MotorSubTextTag, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Throttle = lv_obj_create(ui_CarStats);
     lv_obj_remove_style_all(ui_Throttle);
-    lv_obj_set_width(ui_Throttle, 150);
     lv_obj_set_height(ui_Throttle, 225);
+    lv_obj_set_width(ui_Throttle, LV_SIZE_CONTENT);   /// 150
     lv_obj_set_x(ui_Throttle, -366);
     lv_obj_set_y(ui_Throttle, -49);
     lv_obj_set_align(ui_Throttle, LV_ALIGN_CENTER);
@@ -275,7 +278,7 @@ void ui_DriverDisplay_screen_init(void)
     lv_obj_set_height(ui_ThrottleBaseTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_ThrottleBaseTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_ThrottleBaseTag, "33%");
-    lv_obj_set_style_text_font(ui_ThrottleBaseTag, &lv_font_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_ThrottleBaseTag, &ui_font_Aoto_Gothic_60, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_ThrottleSubTextTag = lv_label_create(ui_Throttle);
     lv_obj_set_width(ui_ThrottleSubTextTag, LV_SIZE_CONTENT);   /// 1
@@ -285,8 +288,8 @@ void ui_DriverDisplay_screen_init(void)
 
     ui_StateofCharge = lv_obj_create(ui_CarStats);
     lv_obj_remove_style_all(ui_StateofCharge);
-    lv_obj_set_width(ui_StateofCharge, 150);
     lv_obj_set_height(ui_StateofCharge, 225);
+    lv_obj_set_width(ui_StateofCharge, LV_SIZE_CONTENT);   /// 150
     lv_obj_set_x(ui_StateofCharge, -1358);
     lv_obj_set_y(ui_StateofCharge, 323);
     lv_obj_set_align(ui_StateofCharge, LV_ALIGN_CENTER);
@@ -308,7 +311,7 @@ void ui_DriverDisplay_screen_init(void)
     lv_obj_set_height(ui_SOCBaseTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_SOCBaseTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_SOCBaseTag, "100%");
-    lv_obj_set_style_text_font(ui_SOCBaseTag, &lv_font_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_SOCBaseTag, &ui_font_Aoto_Gothic_60, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_BatterySubTextTag = lv_label_create(ui_StateofCharge);
     lv_obj_set_width(ui_BatterySubTextTag, LV_SIZE_CONTENT);   /// 1
@@ -318,13 +321,14 @@ void ui_DriverDisplay_screen_init(void)
 
     ui_Brake = lv_obj_create(ui_CarStats);
     lv_obj_remove_style_all(ui_Brake);
-    lv_obj_set_width(ui_Brake, 150);
     lv_obj_set_height(ui_Brake, 225);
+    lv_obj_set_width(ui_Brake, LV_SIZE_CONTENT);   /// 150
     lv_obj_set_x(ui_Brake, -366);
     lv_obj_set_y(ui_Brake, -49);
     lv_obj_set_align(ui_Brake, LV_ALIGN_CENTER);
     lv_obj_set_flex_flow(ui_Brake, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(ui_Brake, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_flag(ui_Brake, LV_OBJ_FLAG_HIDDEN);     /// Flags
     lv_obj_remove_flag(ui_Brake, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_pad_row(ui_Brake, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_column(ui_Brake, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -341,7 +345,7 @@ void ui_DriverDisplay_screen_init(void)
     lv_obj_set_height(ui_BrakeBaseTag, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_align(ui_BrakeBaseTag, LV_ALIGN_CENTER);
     lv_label_set_text(ui_BrakeBaseTag, "67%");
-    lv_obj_set_style_text_font(ui_BrakeBaseTag, &lv_font_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_BrakeBaseTag, &ui_font_Aoto_Gothic_80, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_BrakeSubTextTag = lv_label_create(ui_Brake);
     lv_obj_set_width(ui_BrakeSubTextTag, LV_SIZE_CONTENT);   /// 1
@@ -351,8 +355,8 @@ void ui_DriverDisplay_screen_init(void)
 
     ui_TemperatureContainer = lv_obj_create(ui_BaseContainer);
     lv_obj_remove_style_all(ui_TemperatureContainer);
-    lv_obj_set_width(ui_TemperatureContainer, 133);
     lv_obj_set_height(ui_TemperatureContainer, 561);
+    lv_obj_set_width(ui_TemperatureContainer, LV_SIZE_CONTENT);   /// 133
     lv_obj_set_x(ui_TemperatureContainer, 237);
     lv_obj_set_y(ui_TemperatureContainer, 5);
     lv_obj_set_align(ui_TemperatureContainer, LV_ALIGN_CENTER);
