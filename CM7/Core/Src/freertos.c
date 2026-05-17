@@ -30,11 +30,12 @@
 #include "ui.h"
 #include "can_driver.h"
 #include "can_port.h"
-#include "vehicle_state.h"
 #include "motor_controller_can_utils.h"
 #include "bms_can_utils.h"
 #include "can_utils.h"
 #include "dashboard_ui.h"
+#include "can_router.h"
+#include "vehicle_state.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,10 +71,6 @@ static can_driver_t *g_can2;
 /*
  *	Queue Definitions
  */
-osMessageQueueId_t canQueueHandle;
-const osMessageQueueAttr_t canQueueHandle_attributes = {
-		.name = "canQueue"
-};
 
 /*
  *	OS thread Definitions
@@ -97,14 +94,6 @@ const osThreadAttr_t vehicleStateTask_attributes = {
     .name = "vehicleStateTask",
     .stack_size = 512 * 2,
     .priority = (osPriority_t) osPriorityAboveNormal,
-};
-
-/*
- *  CAN 2 (Sensor/Telemetry) Queue Definition
- */
-osMessageQueueId_t can2QueueHandle;
-const osMessageQueueAttr_t can2QueueHandle_attributes = {
-    .name = "can2Queue"
 };
 
 /*
@@ -145,7 +134,7 @@ void StartSensorStateTask(void *argument);
 
 void StartDefaultTask(void *argument);
 
-void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+void MX_FREERTOS_Init(void); 
 
 /* Hook prototypes */
 void vApplicationIdleHook(void);
@@ -163,6 +152,7 @@ void vApplicationIdleHook( void )
    important that vApplicationIdleHook() is permitted to return to its calling
    function, because it is the responsibility of the idle task to clean up
    memory allocated by the kernel to any task that has since been deleted. */
+	//TODO log potential gains from this
 }
 /* USER CODE END 2 */
 
@@ -172,7 +162,7 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
    /* Run time stack overflow checking is performed if
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
    called if a stack overflow is detected. */
-
+	//TODO log potential issues comming from the offending task
 }
 /* USER CODE END 4 */
 
@@ -210,8 +200,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-	canQueueHandle = osMessageQueueNew(10,sizeof(can_frame_t),NULL);
-	can2QueueHandle = osMessageQueueNew(10, sizeof(can_frame_t), NULL);
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -301,11 +290,23 @@ void StartDefaultTask(void *argument)
 /* USER CODE BEGIN Application */
 /* LVGL timer for tasks */
 /**
- * @brief  Task handler for the LVGL graphics library.
- * @details Periodic task that updates UI labels with the latest vehicle state
- * (Speed and RPM) and executes the LVGL internal timer handler.
- * @note   Runs with a 20ms period (50Hz).
- * @param  argument: Unused.
+ * @brief LVGL GUI update and tick handler task.
+ * @details
+ * Periodic FreeRTOS task responsible for:
+ * - Pulling the latest values from the @ref vehicle_state module
+ * - Updating dashboard UI elements (speed, RPM, SOC, power, etc.)
+ * - Executing the LVGL internal task handler to process GUI timers,
+ *   animations, and redraw events
+ *
+ * This task effectively bridges the application state layer and the
+ * LVGL rendering system.
+ *
+ * @note Runs at a fixed 20 ms period (50 Hz) to maintain UI responsiveness.
+ * @warning LVGL is not inherently thread-safe; all LVGL API calls should
+ * be confined to this task or properly synchronized.
+ *
+ * @param[in] argument Unused task parameter.
+ *
  * @retval None
  */
 void LVGLTimer(void *argument)
@@ -328,103 +329,53 @@ void LVGLTimer(void *argument)
     }
 }
 
+
 /**
- * @brief  Primary CAN bus listener task.
- * @details Blocks until a CAN frame is received via the hardware driver,
- * then pushes the frame into the @ref canQueueHandle for processing.
- * @param  argument: Unused.
+ * @brief Primary CAN bus listener task.
+ * @details
+ * Initializes the vehicle state subsystem and continuously waits
+ * for incoming CAN frames on the CAN1 interface.
+ *
+ * Received frames are forwarded to the central CAN router for
+ * message dispatch and subsystem processing.
+ *
+ * The task blocks indefinitely while waiting for CAN traffic and
+ * yields periodically to the scheduler.
+ *
+ * @param[in] argument Unused task parameter.
+ *
  * @retval None
  */
 void StartCANTask(void *argument)
 {
     can_frame_t frame;
+    VehicleState_Init();
 
     for (;;)
     {
         if (can_receive(g_can1, &frame, portMAX_DELAY) == CAN_OK)
         {
-        	osMessageQueuePut(canQueueHandle, &frame,0,0);
+        	CAN_router(&frame);
+
         }
         osDelay(1);
     }
 }
 
 /**
- * @brief  Task for processing raw CAN data into vehicle state.
- * @details Consumes messages from @ref canQueueHandle. It parses motor controller
- * frames (ID: 0x0A5), calculates vehicle speed based on RPM, and updates
- * the global @ref vehicle_state module.
- * @param  argument: Unused.
+ * @brief Secondary CAN bus listener task.
+ * @details
+ * Continuously waits for incoming CAN frames on the CAN2 interface.
+ * When a valid frame is received, the frame is forwarded to the
+ * central CAN router for dispatch and processing.
+ *
+ * The task blocks indefinitely while waiting for CAN traffic and
+ * yields periodically to the scheduler.
+ *
+ * @param[in] argument Unused task parameter.
+ *
  * @retval None
  */
-void StartVehicleStateTask(void *argument)
-{
-    can_frame_t frame;
-    uint16_t rpm;
-    uint16_t speed;
-    uint32_t watts;
-    VehicleState_Init();
-
-    //TODO This task will get out of hand quickly. The approach needs to change otherwise this will become difficult to maintain.
-    for (;;)
-    {
-    	bms_request_state_of_charge_parameters();
-        if (osMessageQueueGet(canQueueHandle, &frame, NULL, portMAX_DELAY) == osOK)
-        {
-            switch (frame.id)
-            {
-                case CAN_MC_RX_MOTOR_ID:
-                	mc_process_fast_can(frame.data);
-
-                    rpm = mc_get_motor_RPM();
-                    VehicleState_SetRPM(rpm);
-
-                    speed = (uint16_t)(rpm * 0.075861f);
-                    VehicleState_SetSpeed(speed);
-                    break;
-                case 22:
-                	if(frame.data[0] == CAN_ACB_TSA_ACK ||
-                	   frame.data[0] == CAN_ACB_RTD_ACK ||
-                	   frame.data[0] == CAN_GO_IDLE_REQ)
-                	{
-                		VehicleState_SetState(frame.data[0]);
-                	}
-                	break;
-                case CAN_BMS_STATE_OF_CHARGE:
-                	process_bms_state_of_charge_can(frame.data);
-                	VehicleState_SetSOC(get_bms_estimated_state_of_charge());
-                	bms_request_state_of_charge_parameters();
-                	break;
-                case CAN_MC_RX_CURRENT_ID:
-                    mc_process_current_can(frame.data);
-
-                    float current = mc_getBusCurrent();
-
-                    VehicleState_SetPackCurrent((int16_t)current);
-
-                    watts = (int32_t)(mc_getBusVoltage() * current);
-
-                    VehicleState_SetWattage(watts);
-
-                	break;
-                case CAN_MC_RX_VOLT_ID:
-                    mc_process_volt_can(frame.data);
-
-                    VehicleState_SetPackVoltage(
-                        (uint16_t)mc_getBusVoltage());
-
-                    watts = (int32_t)(mc_getBusVoltage() * mc_getBusCurrent());
-
-                    VehicleState_SetWattage(watts);
-                	break;
-
-                default:
-                    break;
-            }
-        }
-    }
-}
-
 void StartCAN2Task(void *argument)
 {
     can_frame_t frame;
@@ -433,33 +384,99 @@ void StartCAN2Task(void *argument)
     {
         if (can_receive(g_can2, &frame, portMAX_DELAY) == CAN_OK)
         {
-            osMessageQueuePut(can2QueueHandle, &frame, 0, 0);
+            CAN_router(&frame);
         }
         osDelay(1);
     }
 }
 
-void StartSensorStateTask(void *argument)
+/**
+ * @brief Vehicle state aggregation and computation task.
+ * @details
+ * Periodically samples subsystem-level telemetry (motor controller,
+ * battery management system, and optional driver inputs) and produces
+ * a consolidated vehicle state representation stored in the global
+ * @ref vehicle_state module.
+ *
+ * Current responsibilities include:
+ * - Converting motor RPM to vehicle speed
+ * - Estimating instantaneous electrical power (V × I)
+ * - Updating pack voltage, current, and state-of-charge (SOC)
+ * - Tracking cell-level extrema (min/max voltage)
+ *
+ * @note This task currently performs direct polling of subsystem APIs
+ * rather than consuming structured CAN messages from a queue. This
+ * design may become difficult to maintain as additional signals are added.
+ *
+ * @warning The computation and aggregation logic is tightly coupled;
+ * consider refactoring into a message-driven or staged processing
+ * pipeline as system complexity increases.
+ *
+ * @param[in] argument Unused task parameter.
+ *
+ * @retval None
+ */
+void StartVehicleStateTask(void *argument)
 {
-    can_frame_t frame;
 
+    VehicleState_Init();
+
+    TickType_t lastWake = xTaskGetTickCount();
+
+    //TODO This task will get out of hand quickly. The approach needs to change otherwise this will become difficult to maintain.
     for (;;)
     {
-        if (osMessageQueueGet(can2QueueHandle, &frame, NULL, portMAX_DELAY) == osOK)
-        {
-            switch (frame.id)
-            {
-                case 0x400:
-                    break;
+        uint16_t rpm = (uint16_t)mc_get_motor_RPM();
+        uint16_t speed = (uint16_t)(rpm * 0.075861f);   // already computed helper
 
-                case 0x500:
-                    break;
+        VehicleState_SetRPM(rpm);
+        VehicleState_SetSpeed(speed);
 
-                default:
-                    break;
-            }
-        }
+        // Power estimation (if you want crude instantaneous power)
+        uint16_t v = mc_getBusVoltage();
+        uint16_t i = mc_getBusCurrent();
+        uint16_t power = v * i;
+
+        VehicleState_SetWattage(power);
+        VehicleState_SetPower(power); // optional scaling
+
+
+        /* =========================
+         * BMS DATA
+         * ========================= */
+        uint16_t packV = (uint16_t)(bms_getAverageVoltage() * 100); // scale consistency
+        int packI = (int)(get_bms_current()); // signed current but stored uint in your API
+
+        uint8_t soc = get_bms_estimated_state_of_charge();
+
+        VehicleState_SetPackVoltage(packV);
+        VehicleState_SetPackCurrent((uint16_t)packI);
+        VehicleState_SetSOC(soc);
+
+        VehicleState_SetCellMax(get_bms_high_voltage());
+        VehicleState_SetCellMin(get_bms_low_voltage());
+
+
+        /* =========================
+         * DRIVER INPUTS (if available elsewhere)
+         * ========================= */
+        // VehicleState_SetThrottle(apps_getThrottle());
+        // VehicleState_SetBrake(brake_getValue());
+
+
+        /* =========================
+         * SYSTEM STATE (optional)
+         * ========================= */
+        // VehicleState_SetState(car_get_state());
+
+
+        /* =========================
+         * LOOP TIMING
+         * ========================= */
+        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(20));
+
     }
 }
+
 /* USER CODE END Application */
 

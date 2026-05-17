@@ -45,7 +45,7 @@ void VehicleState_GetSnapshot(vehicleState_t *dest);
 /** @{ */
 void VehicleState_SetRPM(uint16_t rpm);
 void VehicleState_SetSpeed(uint16_t speed);
-void VehicleState_SetPower(uint8_t power);
+void VehicleState_SetPower(uint16_t power);
 /** @} */
 
 /** @name Driver Input Setters */
@@ -64,7 +64,7 @@ void VehicleState_SetState(uint8_t state);
 void VehicleState_SetPackVoltage(uint16_t voltage);
 void VehicleState_SetPackCurrent(uint16_t current);
 void VehicleState_SetSOC(uint8_t soc);
-void VehicleState_SetWattage(uint8_t wattage);
+void VehicleState_SetWattage(uint16_t wattage);
 void VehicleState_SetCellMax(uint8_t cellmax);
 void VehicleState_SetCellMin(uint8_t cellmin);
 /** @} */

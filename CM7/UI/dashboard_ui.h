@@ -19,7 +19,7 @@ void DashboardUI_SetSpeed(uint16_t speed_kmh);
 void DashboardUI_SetRPM(uint16_t rpm);
 void DashboardUI_SetThrottle(uint8_t throttle_percent);
 void DashboardUI_SetBrake(uint8_t brake_percent);
-void DashboardUI_SetPower(uint8_t power);
+void DashboardUI_SetPower(uint16_t power);
 void DashboardUI_SetSOC(uint8_t soc_percent);
 void DashboardUI_SetDegree(uint8_t temprature);
 void DashboardUI_SetTempGauge(uint16_t temp_percent);

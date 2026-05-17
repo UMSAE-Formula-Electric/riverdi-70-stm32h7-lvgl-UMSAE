@@ -52,7 +52,7 @@ void DashboardUI_SetBrake(uint8_t brake_percent)
     );
 }
 
-void DashboardUI_SetPower(uint8_t power){
+void DashboardUI_SetPower(uint16_t power){
 	lv_label_set_text_fmt(
 		ui_PowerBaseTag,
 		"%u",

@@ -1,3 +1,5 @@
+#include "../modules/vehicle_state.h"
+
 /*
  * vehicle_state.c
  *
@@ -7,7 +9,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "vehicle_state.h"
 
 struct vehicleState {
     uint16_t rpm;
@@ -69,7 +70,7 @@ void VehicleState_SetSpeed(uint16_t speed)
     g_vehicleState.speed = speed;
 }
 
-void VehicleState_SetPower(uint8_t power)
+void VehicleState_SetPower(uint16_t power)
 {
     g_vehicleState.powerKW = power;
 }
@@ -104,7 +105,7 @@ void VehicleState_SetSOC(uint8_t soc)
     g_vehicleState.SOC = soc;
 }
 
-void VehicleState_SetWattage(uint8_t wattage)
+void VehicleState_SetWattage(uint16_t wattage)
 {
     g_vehicleState.wattage = wattage;
 }
