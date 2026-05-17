@@ -65,7 +65,8 @@ typedef struct {
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
-static can_driver_t *g_can;
+static can_driver_t *g_can1;
+static can_driver_t *g_can2;
 
 /*
  *	Queue Definitions
@@ -95,12 +96,29 @@ const osThreadAttr_t vehicleStateTask_attributes = {
     .priority = (osPriority_t) osPriorityAboveNormal,
 };
 
+/*
+ *  CAN 2 OS Thread Definitions
+ */
+osThreadId_t can2TaskHandle;
+const osThreadAttr_t can2Task_attributes = {
+  .name = "can2Task",
+  .stack_size = 512 * 2,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t sensorStateTaskHandle;
+const osThreadAttr_t sensorStateTask_attributes = {
+    .name = "sensorStateTask",
+    .stack_size = 512 * 2,
+    .priority = (osPriority_t) osPriorityNormal,
+};
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 512 * 2,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
@@ -109,11 +127,14 @@ const osThreadAttr_t defaultTask_attributes = {
 void LVGLTimer(void *argument);
 void StartCANTask(void *argument);
 void StartVehicleStateTask(void *argument);
+
+void StartCAN2Task(void *argument);
+void StartSensorStateTask(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
 
-void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+void MX_FREERTOS_Init(void); 
 
 /* Hook prototypes */
 void vApplicationIdleHook(void);
@@ -152,10 +173,17 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-	g_can = can_port_create();
+	g_can1 = can_port_create(1);
+	if (g_can1 != NULL) {
+		can_init(g_can1);
+		can_start(g_can1);
+	}
 
-	can_init(g_can);
-	can_start(g_can);
+	g_can2 = can_port_create(2);
+	if (g_can2 != NULL) {
+		can_init(g_can2);
+		can_start(g_can2);
+	}
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -172,18 +200,21 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-s
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 	lvglTimerHandle = osThreadNew(LVGLTimer, NULL, &lvglTimer_attributes);
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
 	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
+
+    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
+    sensorStateTaskHandle = osThreadNew(StartSensorStateTask, NULL, &sensorStateTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -242,7 +273,7 @@ void StartDefaultTask(void *argument)
 	  tx_frame.data[7] = delta_resolver & 0xFF;
 
 	  // Send the CAN frame
-	  if (can_send(g_can, &tx_frame, 100) == CAN_OK) {
+	  if (can_send(g_can1, &tx_frame, 100) == CAN_OK) {
 		  // Frame sent successfully
 		  //TODO Add logging here for success
 	  } else {
@@ -259,11 +290,23 @@ void StartDefaultTask(void *argument)
 /* USER CODE BEGIN Application */
 /* LVGL timer for tasks */
 /**
- * @brief  Task handler for the LVGL graphics library.
- * @details Periodic task that updates UI labels with the latest vehicle state
- * (Speed and RPM) and executes the LVGL internal timer handler.
- * @note   Runs with a 20ms period (50Hz).
- * @param  argument: Unused.
+ * @brief LVGL GUI update and tick handler task.
+ * @details
+ * Periodic FreeRTOS task responsible for:
+ * - Pulling the latest values from the @ref vehicle_state module
+ * - Updating dashboard UI elements (speed, RPM, SOC, power, etc.)
+ * - Executing the LVGL internal task handler to process GUI timers,
+ *   animations, and redraw events
+ *
+ * This task effectively bridges the application state layer and the
+ * LVGL rendering system.
+ *
+ * @note Runs at a fixed 20 ms period (50 Hz) to maintain UI responsiveness.
+ * @warning LVGL is not inherently thread-safe; all LVGL API calls should
+ * be confined to this task or properly synchronized.
+ *
+ * @param[in] argument Unused task parameter.
+ *
  * @retval None
  */
 void LVGLTimer(void *argument)
@@ -286,11 +329,21 @@ void LVGLTimer(void *argument)
     }
 }
 
+
 /**
- * @brief  Primary CAN bus listener task.
- * @details Blocks until a CAN frame is received via the hardware driver,
- * then pushes the frame into the @ref canQueueHandle for processing.
- * @param  argument: Unused.
+ * @brief Primary CAN bus listener task.
+ * @details
+ * Initializes the vehicle state subsystem and continuously waits
+ * for incoming CAN frames on the CAN1 interface.
+ *
+ * Received frames are forwarded to the central CAN router for
+ * message dispatch and subsystem processing.
+ *
+ * The task blocks indefinitely while waiting for CAN traffic and
+ * yields periodically to the scheduler.
+ *
+ * @param[in] argument Unused task parameter.
+ *
  * @retval None
  */
 void StartCANTask(void *argument)
@@ -300,8 +353,7 @@ void StartCANTask(void *argument)
 
     for (;;)
     {
-
-        if (can_receive(g_can, &frame, portMAX_DELAY) == CAN_OK)
+        if (can_receive(g_can1, &frame, portMAX_DELAY) == CAN_OK)
         {
         	CAN_router(&frame);
 
@@ -311,11 +363,57 @@ void StartCANTask(void *argument)
 }
 
 /**
- * @brief  Task for processing raw CAN data into vehicle state.
- * @details Consumes messages from @ref canQueueHandle. It parses motor controller
- * frames (ID: 0x0A5), calculates vehicle speed based on RPM, and updates
- * the global @ref vehicle_state module.
- * @param  argument: Unused.
+ * @brief Secondary CAN bus listener task.
+ * @details
+ * Continuously waits for incoming CAN frames on the CAN2 interface.
+ * When a valid frame is received, the frame is forwarded to the
+ * central CAN router for dispatch and processing.
+ *
+ * The task blocks indefinitely while waiting for CAN traffic and
+ * yields periodically to the scheduler.
+ *
+ * @param[in] argument Unused task parameter.
+ *
+ * @retval None
+ */
+void StartCAN2Task(void *argument)
+{
+    can_frame_t frame;
+
+    for (;;)
+    {
+        if (can_receive(g_can2, &frame, portMAX_DELAY) == CAN_OK)
+        {
+            CAN_router(&frame);
+        }
+        osDelay(1);
+    }
+}
+
+/**
+ * @brief Vehicle state aggregation and computation task.
+ * @details
+ * Periodically samples subsystem-level telemetry (motor controller,
+ * battery management system, and optional driver inputs) and produces
+ * a consolidated vehicle state representation stored in the global
+ * @ref vehicle_state module.
+ *
+ * Current responsibilities include:
+ * - Converting motor RPM to vehicle speed
+ * - Estimating instantaneous electrical power (V × I)
+ * - Updating pack voltage, current, and state-of-charge (SOC)
+ * - Tracking cell-level extrema (min/max voltage)
+ *
+ * @note This task currently performs direct polling of subsystem APIs
+ * rather than consuming structured CAN messages from a queue. This
+ * design may become difficult to maintain as additional signals are added.
+ *
+ * @warning The computation and aggregation logic is tightly coupled;
+ * consider refactoring into a message-driven or staged processing
+ * pipeline as system complexity increases.
+ *
+ * @param[in] argument Unused task parameter.
+ *
  * @retval None
  */
 void StartVehicleStateTask(void *argument)
@@ -379,5 +477,6 @@ void StartVehicleStateTask(void *argument)
 
     }
 }
+
 /* USER CODE END Application */
 
