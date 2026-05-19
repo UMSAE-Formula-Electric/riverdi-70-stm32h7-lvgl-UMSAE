@@ -166,6 +166,8 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM_D1
 
+.ram_d2 : { . = ALIGN(4); *(.ram_d2) *(.ram_d2*) . = ALIGN(4); } >RAM_D2
+
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
   ._user_heap_stack :
   {

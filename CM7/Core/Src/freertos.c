@@ -79,7 +79,7 @@ osThreadId_t lvglTimerHandle;
 const osThreadAttr_t lvglTimer_attributes = {
   .name = "lvglTimer",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 4 * 1024
+  .stack_size = 8 * 1024
 };
 /* Definitions for canRxTask */
 osThreadId_t canTaskHandle;
@@ -106,12 +106,6 @@ const osThreadAttr_t can2Task_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
-osThreadId_t sensorStateTaskHandle;
-const osThreadAttr_t sensorStateTask_attributes = {
-    .name = "sensorStateTask",
-    .stack_size = 512 * 2,
-    .priority = (osPriority_t) osPriorityNormal,
-};
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -129,7 +123,7 @@ void StartCANTask(void *argument);
 void StartVehicleStateTask(void *argument);
 
 void StartCAN2Task(void *argument);
-void StartSensorStateTask(void *argument);
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -214,7 +208,7 @@ void MX_FREERTOS_Init(void) {
 	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
 
     can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
-    sensorStateTaskHandle = osThreadNew(StartSensorStateTask, NULL, &sensorStateTask_attributes);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -311,24 +305,29 @@ void StartDefaultTask(void *argument)
  */
 void LVGLTimer(void *argument)
 {
+    TickType_t lastWake = xTaskGetTickCount();
+
     for (;;)
     {
+        uint16_t speed = VehicleState_GetSpeed();
+        uint16_t rpm = VehicleState_GetRPM();
+        uint8_t brake = VehicleState_GetBrake();
+        uint16_t power = VehicleState_GetWattage();
+        uint8_t throttle = VehicleState_GetThrottle();
+        uint8_t soc = VehicleState_GetSOC();
 
-        DashboardUI_SetSpeed(VehicleState_GetSpeed());
-        DashboardUI_SetRPM(VehicleState_GetRPM());
-        DashboardUI_SetBrake(VehicleState_GetBrake());
-        DashboardUI_SetPower(VehicleState_GetWattage());
-        DashboardUI_SetThrottle(VehicleState_GetThrottle());
-        DashboardUI_SetSOC(VehicleState_GetSOC());
-        DashboardUI_SetDegree(0);
-        DashboardUI_SetTempGauge(0);
-        DashboardUI_SetVehicleState(VehicleState_GetState());
+        DashboardUI_SetSpeed(speed);
+        DashboardUI_SetRPM(rpm);
+        DashboardUI_SetBrake(brake);
+        DashboardUI_SetPower(power);
+        DashboardUI_SetThrottle(throttle);
+        DashboardUI_SetSOC(soc);
 
         lv_timer_handler();
-        osDelay(20);
+
+        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(67));
     }
 }
-
 
 /**
  * @brief Primary CAN bus listener task.
@@ -349,7 +348,6 @@ void LVGLTimer(void *argument)
 void StartCANTask(void *argument)
 {
     can_frame_t frame;
-    VehicleState_Init();
 
     for (;;)
     {
@@ -467,7 +465,7 @@ void StartVehicleStateTask(void *argument)
         /* =========================
          * SYSTEM STATE (optional)
          * ========================= */
-        // VehicleState_SetState(car_get_state());
+        VehicleState_SetState(get_car_state());
 
 
         /* =========================
@@ -477,6 +475,7 @@ void StartVehicleStateTask(void *argument)
 
     }
 }
+
 
 /* USER CODE END Application */
 

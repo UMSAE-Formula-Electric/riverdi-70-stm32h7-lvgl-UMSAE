@@ -31,11 +31,6 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>UI</name>
-			<type>2</type>
-			<location>C:/home/mason/Dash/riverdi-70-stm32h7-lvgl-UMSAE/CM7/UI</location>
-		</link>
-		<link>
 			<name>Middlewares/LVGL</name>
 			<type>2</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/LVGL</locationURI>
