@@ -83,6 +83,9 @@ out/
 .settings/
 .metadata/
 RemoteSystemsTempFiles/
+*.log
+*.bak
+*.swp
 
 # =========================
 # CMake / Ninja
@@ -98,7 +101,9 @@ build.ninja
 # =========================
 # SquareLine Studio
 # =========================
-backup/
+backup/*
+SquareLine_Project.sll
+SquareLine_Project.slp
 
 # =========================
 # OS / editor junk
