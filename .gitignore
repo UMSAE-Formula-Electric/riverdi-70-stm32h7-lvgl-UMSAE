@@ -1,48 +1,66 @@
-# Prerequisites
+# =========================
+# Prerequisites / deps
+# =========================
 *.d
 
+# =========================
 # Object files
+# =========================
 *.o
 *.ko
 *.obj
-*.elf
 
-# Linker output
-*.ilk
+# =========================
+# Linker outputs
+# =========================
 *.map
+*.ilk
 *.exp
 
-# Precompiled Headers
+# =========================
+# Precompiled headers
+# =========================
 *.gch
 *.pch
 
+# =========================
 # Libraries
+# =========================
 *.lib
 *.a
 *.la
 *.lo
 
-# Shared objects (inc. Windows DLLs)
+# =========================
+# Shared objects
+# =========================
 *.dll
 *.so
 *.so.*
 *.dylib
 
-# Executables
+# =========================
+# Executables 
+# =========================
 *.exe
 *.out
 *.app
 *.i*86
 *.x86_64
 *.hex
+*.elf
 
+# =========================
 # Debug files
+# =========================
 *.dSYM/
 *.su
 *.idb
 *.pdb
 
-# Kernel Module Compile Results
+# =========================
+# Kernel module artifacts
+# =========================
 *.mod*
 *.cmd
 .tmp_versions/
@@ -51,6 +69,41 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# =========================
+# Build output
+# =========================
 Debug/
 Release/
-*.launch
+build/
+out/
+
+# =========================
+# STM32CubeIDE
+# =========================
+.settings/
+.metadata/
+RemoteSystemsTempFiles/
+
+# =========================
+# CMake / Ninja
+# =========================
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+build.ninja
+.ninja_log
+.ninja_deps
+
+# =========================
+# SquareLine Studio
+# =========================
+backup/
+
+# =========================
+# OS / editor junk
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
