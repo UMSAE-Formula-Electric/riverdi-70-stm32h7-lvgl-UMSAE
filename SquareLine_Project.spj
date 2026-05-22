@@ -1435,7 +1435,7 @@
                                   {
                                     "nid": 10450,
                                     "strtype": "_style/Text_Font",
-                                    "strval": "Aoto_Gothic_60",
+                                    "strval": "montserrat_48",
                                     "InheritedType": 3
                                   }
                                 ],
@@ -2072,7 +2072,7 @@
                                   {
                                     "nid": 10450,
                                     "strtype": "_style/Text_Font",
-                                    "strval": "Aoto_Gothic_120",
+                                    "strval": "montserrat_48",
                                     "InheritedType": 3
                                   }
                                 ],
@@ -2721,7 +2721,7 @@
                                   {
                                     "nid": 10450,
                                     "strtype": "_style/Text_Font",
-                                    "strval": "Aoto_Gothic_60",
+                                    "strval": "montserrat_48",
                                     "InheritedType": 3
                                   }
                                 ],
@@ -3358,7 +3358,7 @@
                                   {
                                     "nid": 10450,
                                     "strtype": "_style/Text_Font",
-                                    "strval": "Aoto_Gothic_60",
+                                    "strval": "montserrat_48",
                                     "InheritedType": 3
                                   }
                                 ],
@@ -3980,7 +3980,7 @@
                                   {
                                     "nid": 10450,
                                     "strtype": "_style/Text_Font",
-                                    "strval": "Aoto_Gothic_60",
+                                    "strval": "montserrat_48",
                                     "InheritedType": 3
                                   }
                                 ],
@@ -5677,6 +5677,12 @@
                     "InheritedType": 1
                   },
                   {
+                    "nid": 100,
+                    "strtype": "OBJECT/Hidden",
+                    "strval": "True",
+                    "InheritedType": 2
+                  },
+                  {
                     "nid": 110,
                     "strtype": "OBJECT/Clickable",
                     "strval": "False",
@@ -6053,7 +6059,7 @@
     "separate_screen_save": false,
     "hierarchy_state_save": false,
     "reverse_event_order": false,
-    "backup_cnt": 24,
+    "backup_cnt": 27,
     "autosave_cnt": 0,
     "group_color_cnt": 0,
     "imagebytearrayprefix": "",

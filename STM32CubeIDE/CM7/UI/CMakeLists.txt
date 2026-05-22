@@ -1,9 +1,6 @@
 SET(SOURCES screens/ui_DriverDisplay.c
     ui.c
     components/ui_comp_hook.c
-    ui_helpers.c
-    fonts/ui_font_Aoto_Gothic_120.c
-    fonts/ui_font_Aoto_Gothic_60.c
-    fonts/ui_font_Aoto_Gothic_80.c)
+    ui_helpers.c)
 
 add_library(ui ${SOURCES})
