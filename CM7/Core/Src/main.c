@@ -46,7 +46,6 @@
 #include "lvgl_port_touch.h"
 #include "lvgl_port_display.h"
 #include "ui.h"
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -189,26 +188,21 @@ Error_Handler();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
+  /* initialize LVGL framework */
+  lv_init();
 
+  /* initialize display and touchscreen */
+  lvgl_display_init();
+//    lvgl_touchscreen_init();
 
-    /* initialize LVGL framework */
-    lv_init();
+  lv_tick_set_cb(HAL_GetTick);
 
-    /* initialize display and touchscreen */
-    lvgl_display_init();
-    lvgl_touchscreen_init();
-
-    lv_tick_set_cb(HAL_GetTick);
-
-    ui_init();
-
+  ui_init();
 
     /* pwm */
-    if (HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1) != HAL_OK)
-      Error_Handler();
+	if (HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1) != HAL_OK)
+	  Error_Handler();
 
-    /* Call init function for freertos objects (in freertos.c) */
-    MX_FREERTOS_Init();
   /* USER CODE END 2 */
 
   /* Init scheduler */

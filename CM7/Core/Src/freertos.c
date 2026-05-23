@@ -27,6 +27,8 @@
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
 #include "lvgl/lvgl.h"
+#include "lvgl_port_touch.h"
+#include "lvgl_port_display.h"
 #include "ui.h"
 #include "can_driver.h"
 #include "can_port.h"
@@ -78,7 +80,7 @@ static can_driver_t *g_can2;
 osThreadId_t lvglTimerHandle;
 const osThreadAttr_t lvglTimer_attributes = {
   .name = "lvglTimer",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityAboveNormal,
   .stack_size = 8 * 1024
 };
 /* Definitions for canRxTask */
@@ -86,14 +88,14 @@ osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
   .name = "canTask",
   .stack_size = 512 * 2,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 
 osThreadId_t vehicleStateTaskHandle;
 const osThreadAttr_t vehicleStateTask_attributes = {
     .name = "vehicleStateTask",
     .stack_size = 512 * 2,
-    .priority = (osPriority_t) osPriorityAboveNormal,
+    .priority = (osPriority_t) osPriorityBelowNormal,
 };
 
 /*
@@ -103,7 +105,7 @@ osThreadId_t can2TaskHandle;
 const osThreadAttr_t can2Task_attributes = {
   .name = "can2Task",
   .stack_size = 512 * 2,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 
 
@@ -121,8 +123,28 @@ const osThreadAttr_t defaultTask_attributes = {
 void LVGLTimer(void *argument);
 void StartCANTask(void *argument);
 void StartVehicleStateTask(void *argument);
-
 void StartCAN2Task(void *argument);
+
+static void ui_update_cb(lv_timer_t *timer)
+{
+    /* Read vehicle state – ensure thread-safe access (e.g., via a mutex) */
+    uint16_t speed   = VehicleState_GetSpeed();
+    uint16_t rpm     = VehicleState_GetRPM();
+    uint8_t  brake   = VehicleState_GetBrake();
+    uint16_t power   = VehicleState_GetWattage();
+    uint8_t  throttle= VehicleState_GetThrottle();
+    uint8_t  soc     = VehicleState_GetSOC();
+    enum CAR_STATE state = VehicleState_GetState();
+
+    /* Now it's safe to call LVGL API without explicit locks */
+    DashboardUI_SetSpeed(speed);
+    DashboardUI_SetRPM(rpm);
+    DashboardUI_SetBrake(brake);
+    DashboardUI_SetPower(power);
+    DashboardUI_SetThrottle(throttle);
+    DashboardUI_SetSOC(soc);
+    DashboardUI_SetVehicleState(state);
+}
 
 /* USER CODE END FunctionPrototypes */
 
@@ -153,10 +175,29 @@ void vApplicationIdleHook( void )
 /* USER CODE BEGIN 4 */
 void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
 {
-   /* Run time stack overflow checking is performed if
-   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
-   called if a stack overflow is detected. */
-	//TODO log potential issues comming from the offending task
+    (void)xTask;
+
+    /* Make sure debugger stops *exactly here* */
+    __disable_irq();
+
+    /* Force visibility in debugger watch window */
+    volatile const char *task_name = pcTaskName;
+
+    /* Optional: store fault info in global variables */
+    static volatile const char *fault_task_name = 0;
+    static volatile TaskHandle_t fault_task_handle = 0;
+
+    fault_task_name = pcTaskName;
+    fault_task_handle = xTask;
+
+    /* Optional: break immediately into debugger */
+    __BKPT(0);
+
+    /* Optional: trap CPU if debugger is not attached */
+    while (1)
+    {
+        __NOP();
+    }
 }
 /* USER CODE END 4 */
 
@@ -173,11 +214,14 @@ void MX_FREERTOS_Init(void) {
 		can_start(g_can1);
 	}
 
-	g_can2 = can_port_create(2);
-	if (g_can2 != NULL) {
-		can_init(g_can2);
-		can_start(g_can2);
-	}
+//	g_can2 = can_port_create(2);
+//	if (g_can2 != NULL) {
+//		can_init(g_can2);
+//		can_start(g_can2);
+//	}
+
+    /* Create LVGL timer to update dashboard UI */
+    lv_timer_create(ui_update_cb, 50, NULL);
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -199,15 +243,14 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 	lvglTimerHandle = osThreadNew(LVGLTimer, NULL, &lvglTimer_attributes);
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
 	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
-
-    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
+//    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
 
   /* USER CODE END RTOS_THREADS */
 
@@ -275,11 +318,9 @@ void StartDefaultTask(void *argument)
 		  //TODO Add Logging here for failure
 	  }
 
-	  osDelay(100);  // Send every 100ms (10Hz)
+	  vTaskDelay(pdMS_TO_TICKS(100));  // Send every 100ms (10Hz)
   }
-  /* USER CODE END StartDefaultTask */
 }
-
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 /* LVGL timer for tasks */
@@ -305,27 +346,11 @@ void StartDefaultTask(void *argument)
  */
 void LVGLTimer(void *argument)
 {
-    TickType_t lastWake = xTaskGetTickCount();
 
     for (;;)
     {
-        uint16_t speed = VehicleState_GetSpeed();
-        uint16_t rpm = VehicleState_GetRPM();
-        uint8_t brake = VehicleState_GetBrake();
-        uint16_t power = VehicleState_GetWattage();
-        uint8_t throttle = VehicleState_GetThrottle();
-        uint8_t soc = VehicleState_GetSOC();
-
-        DashboardUI_SetSpeed(speed);
-        DashboardUI_SetRPM(rpm);
-        DashboardUI_SetBrake(brake);
-        DashboardUI_SetPower(power);
-        DashboardUI_SetThrottle(throttle);
-        DashboardUI_SetSOC(soc);
-
         lv_timer_handler();
-
-        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(67));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
@@ -351,12 +376,12 @@ void StartCANTask(void *argument)
 
     for (;;)
     {
-        if (can_receive(g_can1, &frame, portMAX_DELAY) == CAN_OK)
+        if (can_receive(g_can1, &frame, 15) == CAN_OK)
         {
         	CAN_router(&frame);
 
         }
-        osDelay(1);
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 
@@ -368,7 +393,7 @@ void StartCANTask(void *argument)
  * central CAN router for dispatch and processing.
  *
  * The task blocks indefinitely while waiting for CAN traffic and
- * yields periodically to the scheduler.
+ * yields periodically to the scheduler.nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
  *
  * @param[in] argument Unused task parameter.
  *
@@ -380,11 +405,11 @@ void StartCAN2Task(void *argument)
 
     for (;;)
     {
-        if (can_receive(g_can2, &frame, portMAX_DELAY) == CAN_OK)
+        if (can_receive(g_can2, &frame, 15) == CAN_OK)
         {
             CAN_router(&frame);
         }
-        osDelay(1);
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 
@@ -418,8 +443,6 @@ void StartVehicleStateTask(void *argument)
 {
 
     VehicleState_Init();
-
-    TickType_t lastWake = xTaskGetTickCount();
 
     //TODO This task will get out of hand quickly. The approach needs to change otherwise this will become difficult to maintain.
     for (;;)
@@ -471,7 +494,7 @@ void StartVehicleStateTask(void *argument)
         /* =========================
          * LOOP TIMING
          * ========================= */
-        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(20));
 
     }
 }

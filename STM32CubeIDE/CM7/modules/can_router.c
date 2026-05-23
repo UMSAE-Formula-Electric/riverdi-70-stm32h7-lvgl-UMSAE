@@ -7,8 +7,29 @@
 
 
 #include "can_router.h"
+#include "can_utils.h"
 #include "motor_controller_can_utils.h"
 #include "bms_can_utils.h"
+#include "car_state.h"
+
+static void handle_startup_state_msg(uint8_t msg)
+{
+    switch ((enum STARTUP_STATUS_NOTIFY_MSG)msg)
+    {
+        case CAN_GO_IDLE_REQ:
+            set_car_state(IDLE);
+            break;
+
+        case CAN_ACB_TSA_ACK:
+        	set_car_state(TRACTIVE_SYSTEM_ACTIVE);
+        	break;
+        case CAN_ACB_RTD_ACK:
+            set_car_state(READY_TO_DRIVE);
+            break;
+        default:
+            break;
+    }
+}
 
 void CAN_router(const can_frame_t *frame)
 {
@@ -40,6 +61,10 @@ void CAN_router(const can_frame_t *frame)
         	BMS_Process(frame->id,frame->data);
             break;
 
+
+        case CAN_ACU_TO_VCU_ID:
+			handle_startup_state_msg(frame->data[0]);
+        	break;
         /* ---------------- IGNORE OR EXTEND ---------------- */
         default:
             break;

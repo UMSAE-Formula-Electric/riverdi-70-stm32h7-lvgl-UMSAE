@@ -118,32 +118,6 @@ void DashboardUI_SetVehicleState(enum CAR_STATE state)
             break;
         }
 
-        case ERROR_STATE:
-        {
-            text = "ERROR";
-
-            color = lv_palette_main(LV_PALETTE_RED);
-
-            break;
-        }
-
-        case CHARGING_SYSTEM_ACTIVE:
-        {
-            text = "CHARGING";
-
-            color = lv_palette_main(LV_PALETTE_YELLOW);
-
-            break;
-        }
-
-        default:
-        {
-            text = "UNKNOWN";
-
-            color = lv_palette_main(LV_PALETTE_RED);
-
-            break;
-        }
     }
 
     lv_label_set_text(
