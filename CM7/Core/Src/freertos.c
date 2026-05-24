@@ -30,6 +30,7 @@
 #include "lvgl_port_touch.h"
 #include "lvgl_port_display.h"
 #include "ui.h"
+#include "ui_events.h"
 #include "can_driver.h"
 #include "can_port.h"
 #include "motor_controller_can_utils.h"
@@ -154,7 +155,7 @@ void MX_FREERTOS_Init(void);
 
 /* Hook prototypes */
 void vApplicationIdleHook(void);
-void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName);
+void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName);
 
 /* USER CODE BEGIN 2 */
 void vApplicationIdleHook( void )
@@ -173,7 +174,7 @@ void vApplicationIdleHook( void )
 /* USER CODE END 2 */
 
 /* USER CODE BEGIN 4 */
-void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
+void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName)
 {
     (void)xTask;
 
@@ -181,11 +182,11 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
     __disable_irq();
 
     /* Force visibility in debugger watch window */
-    volatile const char *task_name = pcTaskName;
+    volatile const char *task_name __attribute__((unused)) = pcTaskName;
 
     /* Optional: store fault info in global variables */
-    static volatile const char *fault_task_name = 0;
-    static volatile TaskHandle_t fault_task_handle = 0;
+    static volatile const char *fault_task_name __attribute__((unused)) = 0;
+    static volatile TaskHandle_t fault_task_handle __attribute__((unused)) = 0;
 
     fault_task_name = pcTaskName;
     fault_task_handle = xTask;
@@ -219,6 +220,8 @@ void MX_FREERTOS_Init(void) {
 //		can_init(g_can2);
 //		can_start(g_can2);
 //	}
+
+	UIEvents_Init();
 
     /* Create LVGL timer to update dashboard UI */
     lv_timer_create(ui_update_cb, 50, NULL);
@@ -272,7 +275,7 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-	  /* USER CODE BEGIN StartDefaultTask */
+    UIEvents_PostTest("Default Task running!");
 	uint16_t speed = 0;
 	uint16_t angle = 0;
 	can_frame_t tx_frame;
@@ -346,9 +349,13 @@ void StartDefaultTask(void *argument)
  */
 void LVGLTimer(void *argument)
 {
-
+	UIEvent_t evt;
     for (;;)
     {
+        while (xQueueReceive(g_ui_event_queue, &evt, 0) == pdPASS) {
+            UI_HandleEvent(&evt);
+        }
+
         lv_timer_handler();
         vTaskDelay(pdMS_TO_TICKS(20));
     }
@@ -373,7 +380,6 @@ void LVGLTimer(void *argument)
 void StartCANTask(void *argument)
 {
     can_frame_t frame;
-
     for (;;)
     {
         if (can_receive(g_can1, &frame, 15) == CAN_OK)
@@ -443,6 +449,7 @@ void StartVehicleStateTask(void *argument)
 {
 
     VehicleState_Init();
+
 
     //TODO This task will get out of hand quickly. The approach needs to change otherwise this will become difficult to maintain.
     for (;;)
