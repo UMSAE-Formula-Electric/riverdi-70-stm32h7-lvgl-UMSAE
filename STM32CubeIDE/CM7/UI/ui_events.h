@@ -2,7 +2,6 @@
 #ifndef _UI_EVENTS_H
 #define _UI_EVENTS_H
 
-
 #include <stdbool.h>
 #include "FreeRTOS.h"
 #include "queue.h"
@@ -10,9 +9,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-#define MESSAGE_LENGTH 48
 
 typedef enum {
     UI_EVENT_SD_INSERTED,
@@ -24,9 +20,8 @@ typedef enum {
 typedef struct {
     UIEventType_t type;
     union {
-    	struct { char message[MESSAGE_LENGTH]; } notification;
-        struct { char message[MESSAGE_LENGTH]; } fault;
-        struct { char message[MESSAGE_LENGTH]; } test;
+        struct { char message[48]; } fault;
+        struct { char message[48]; } test;
     };
 } UIEvent_t;
 
@@ -36,8 +31,8 @@ void UIEvents_Init(void);
 void UI_HandleEvent(const UIEvent_t *evt);
 bool UIEvents_Post(const UIEvent_t *evt);
 void UIEvents_PostSD(bool inserted);
-void UIEvents_PostFault(const char *message, size_t length);
-void UIEvents_PostTest(const char *message, size_t length);
+void UIEvents_PostFault(const char *message);
+void UIEvents_PostTest(const char *message);
 
 #ifdef __cplusplus
 }

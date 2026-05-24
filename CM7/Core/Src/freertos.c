@@ -182,11 +182,11 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName)
     __disable_irq();
 
     /* Force visibility in debugger watch window */
-    volatile const char *task_name = pcTaskName;
+    volatile const char *task_name __attribute__((unused)) = pcTaskName;
 
     /* Optional: store fault info in global variables */
-    static volatile const char *fault_task_name = 0;
-    static volatile TaskHandle_t fault_task_handle = 0;
+    static volatile const char *fault_task_name __attribute__((unused)) = 0;
+    static volatile TaskHandle_t fault_task_handle __attribute__((unused)) = 0;
 
     fault_task_name = pcTaskName;
     fault_task_handle = xTask;
@@ -224,6 +224,8 @@ void MX_FREERTOS_Init(void) {
 		can_init(g_can2);
 		can_start(g_can2);
 	}
+
+	UIEvents_Init();
 
 	UIEvents_Init();
 
@@ -280,7 +282,11 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+<<<<<<< HEAD
     UIEvents_PostTest("Default Task running!", sizeof("Default Task running!"));
+=======
+    UIEvents_PostTest("Default Task running!");
+>>>>>>> 5581c79 (Created new UI toast notifications)
 	uint16_t speed = 0;
 	uint16_t angle = 0;
 	can_frame_t tx_frame;
