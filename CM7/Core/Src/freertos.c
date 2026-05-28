@@ -182,11 +182,11 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName)
     __disable_irq();
 
     /* Force visibility in debugger watch window */
-    volatile const char *task_name __attribute__((unused)) = pcTaskName;
+    volatile const char *task_name = pcTaskName;
 
     /* Optional: store fault info in global variables */
-    static volatile const char *fault_task_name __attribute__((unused)) = 0;
-    static volatile TaskHandle_t fault_task_handle __attribute__((unused)) = 0;
+    static volatile const char *fault_task_name = 0;
+    static volatile TaskHandle_t fault_task_handle = 0;
 
     fault_task_name = pcTaskName;
     fault_task_handle = xTask;
@@ -224,8 +224,11 @@ void MX_FREERTOS_Init(void) {
 		can_init(g_can2);
 		can_start(g_can2);
 	}
+<<<<<<< HEAD
 
 	UIEvents_Init();
+=======
+>>>>>>> 1c50b72 (Cleaned up code quality)
 
 	UIEvents_Init();
 
