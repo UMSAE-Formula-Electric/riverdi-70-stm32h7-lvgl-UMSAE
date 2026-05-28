@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+#define MESSAGE_LENGTH 48
+
 typedef enum {
     UI_EVENT_SD_INSERTED,
     UI_EVENT_SD_REMOVED,
@@ -20,8 +22,9 @@ typedef enum {
 typedef struct {
     UIEventType_t type;
     union {
-        struct { char message[48]; } fault;
-        struct { char message[48]; } test;
+    	struct { char message[MESSAGE_LENGTH]; } notification;
+        struct { char message[MESSAGE_LENGTH]; } fault;
+        struct { char message[MESSAGE_LENGTH]; } test;
     };
 } UIEvent_t;
 
