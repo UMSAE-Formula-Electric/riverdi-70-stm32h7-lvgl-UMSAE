@@ -2,6 +2,7 @@
 #ifndef _UI_EVENTS_H
 #define _UI_EVENTS_H
 
+#include <stdbool.h>
 #include "FreeRTOS.h"
 #include "queue.h"
 
@@ -32,6 +33,7 @@ bool UIEvents_Post(const UIEvent_t *evt);
 void UIEvents_PostSD(bool inserted);
 void UIEvents_PostFault(const char *message);
 void UIEvents_PostTest(const char *message);
+
 #ifdef __cplusplus
 }
 #endif
