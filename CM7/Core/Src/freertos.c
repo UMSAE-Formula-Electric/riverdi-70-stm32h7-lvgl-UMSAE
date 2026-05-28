@@ -182,14 +182,18 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName)
     __disable_irq();
 
     /* Force visibility in debugger watch window */
-    volatile const char *task_name __attribute__((unused)) = pcTaskName;
+    volatile const char *task_name = pcTaskName;
 
     /* Optional: store fault info in global variables */
-    static volatile const char *fault_task_name __attribute__((unused)) = 0;
-    static volatile TaskHandle_t fault_task_handle __attribute__((unused)) = 0;
+    static volatile const char *fault_task_name = 0;
+    static volatile TaskHandle_t fault_task_handle = 0;
 
     fault_task_name = pcTaskName;
     fault_task_handle = xTask;
+
+    (void)fault_task_name;
+    (void)fault_task_handle;
+    (void)task_name;
 
     /* Optional: break immediately into debugger */
     __BKPT(0);
@@ -215,11 +219,11 @@ void MX_FREERTOS_Init(void) {
 		can_start(g_can1);
 	}
 
-//	g_can2 = can_port_create(2);
-//	if (g_can2 != NULL) {
-//		can_init(g_can2);
-//		can_start(g_can2);
-//	}
+	g_can2 = can_port_create(2);
+	if (g_can2 != NULL) {
+		can_init(g_can2);
+		can_start(g_can2);
+	}
 
 	UIEvents_Init();
 
@@ -246,14 +250,15 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
+#ifdef DEBUG
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+#endif
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 	lvglTimerHandle = osThreadNew(LVGLTimer, NULL, &lvglTimer_attributes);
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
 	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
-//    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
+    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
 
   /* USER CODE END RTOS_THREADS */
 
