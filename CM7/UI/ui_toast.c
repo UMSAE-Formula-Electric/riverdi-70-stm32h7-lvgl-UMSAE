@@ -7,6 +7,7 @@
 #include "ui_toast.h"
 #include "lvgl/lvgl.h"
 
+<<<<<<< HEAD
 
 /*
  * Animation completion callback — deletes the toast object once the
@@ -15,6 +16,15 @@
 #define TOAST_ANIM_MS 300
 
 
+=======
+/* Duration of the fade-out animation in milliseconds */
+#define TOAST_ANIM_MS 300
+
+/*
+ * Animation completion callback — deletes the toast object once the
+ * fade-out animation has finished, freeing all associated LVGL resources.
+ */
+>>>>>>> a001605 (Added message lengths to the toast messagage buffers and wrote comments.)
 static void toast_anim_ready_cb(lv_anim_t *a) {
     lv_obj_t *toast = (lv_obj_t *)lv_anim_get_user_data(a);
     lv_obj_delete(toast);
@@ -71,6 +81,9 @@ void UIToast_Show(const char *message, uint32_t duration_ms) {
     lv_anim_set_duration(&a, TOAST_ANIM_MS);                     /* Fade lasts TOAST_ANIM_MS ms */
     lv_anim_set_delay(&a, duration_ms);                          /* Begin fade after the display duration */
     lv_anim_set_ready_cb(&a, toast_anim_ready_cb);               /* Delete toast once fade completes */
+<<<<<<< HEAD
 
+=======
+>>>>>>> a001605 (Added message lengths to the toast messagage buffers and wrote comments.)
     lv_anim_start(&a);
 }
