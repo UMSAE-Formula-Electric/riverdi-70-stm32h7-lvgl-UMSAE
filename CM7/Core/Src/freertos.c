@@ -232,8 +232,6 @@ void MX_FREERTOS_Init(void) {
 
 	UIEvents_Init();
 
-    /* Create LVGL timer to update dashboard UI */
-    lv_timer_create(ui_update_cb, 50, NULL);
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -363,7 +361,15 @@ void StartDefaultTask(void *argument)
  */
 void LVGLTimer(void *argument)
 {
+
 	UIEvent_t evt;
+	//Apply theme style
+    UITheme_Init();
+    DashboardScreen_ApplyTheme(UITheme_Get());
+
+    /* Create LVGL timer to update dashboard UI */
+    lv_timer_create(ui_update_cb, 50, NULL);
+
     for (;;)
     {
         while (xQueueReceive(g_ui_event_queue, &evt, 0) == pdPASS) {

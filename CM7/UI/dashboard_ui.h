@@ -12,8 +12,10 @@
 #include <stdbool.h>
 
 #include "car_state.h"
+#include "ui_theme.h"
 
 void DashboardUI_Init(void);
+void DashboardUI_ApplyTheme(const UITheme_t *t);
 
 void DashboardUI_SetSpeed(uint16_t speed_kmh);
 void DashboardUI_SetRPM(uint16_t rpm);
