@@ -34,8 +34,8 @@ void UIEvents_Init(void);
 void UI_HandleEvent(const UIEvent_t *evt);
 bool UIEvents_Post(const UIEvent_t *evt);
 void UIEvents_PostSD(bool inserted);
-void UIEvents_PostFault(const char *message);
-void UIEvents_PostTest(const char *message);
+void UIEvents_PostFault(const char *message, size_t length);
+void UIEvents_PostTest(const char *message, size_t length);
 
 #ifdef __cplusplus
 }

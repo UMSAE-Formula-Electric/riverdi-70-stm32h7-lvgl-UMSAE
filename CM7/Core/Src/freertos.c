@@ -280,7 +280,7 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-    UIEvents_PostTest("Default Task running!");
+    UIEvents_PostTest("Default Task running!", sizeof("Default Task running!"));
 	uint16_t speed = 0;
 	uint16_t angle = 0;
 	can_frame_t tx_frame;

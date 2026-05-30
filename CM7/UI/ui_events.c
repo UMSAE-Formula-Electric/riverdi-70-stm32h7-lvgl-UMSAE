@@ -43,21 +43,21 @@ void UIEvents_Init(void) {
 void UI_HandleEvent(const UIEvent_t *evt) {
     switch (evt->type) {
         case UI_EVENT_SD_INSERTED:
-            UIToast_Show(SD_INSERTED, TOAST_ANIM_MS);
+            UIToast_Show(SD_INSERTED, 3000);
             break;
 
         case UI_EVENT_SD_REMOVED:
-            UIToast_Show(SD_EJECTED, TOAST_ANIM_MS);
+            UIToast_Show(SD_EJECTED, 3000);
             break;
 
         case UI_EVENT_FAULT:
             /* Message is embedded in the event payload */
-            UIToast_Show(evt->fault.message, TOAST_ANIM_MS);
+            UIToast_Show(evt->fault.message, 3000);
             break;
 
         case UI_EVENT_TEST:
             /* Message is embedded in the event payload */
-            UIToast_Show(evt->test.message, TOAST_ANIM_MS);
+            UIToast_Show(evt->test.message, 3000);
             break;
 
         default:
