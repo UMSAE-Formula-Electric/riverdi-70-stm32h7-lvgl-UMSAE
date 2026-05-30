@@ -31,6 +31,26 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>Firmware-Library</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Firmware-Library</locationURI>
+		</link>
+		<link>
+			<name>UI</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/CM7/UI</locationURI>
+		</link>
+		<link>
+			<name>modules</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/modules</locationURI>
+		</link>
+		<link>
+			<name>Drivers/CAN</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/Drivers/CAN</locationURI>
+		</link>
+		<link>
 			<name>Middlewares/LVGL</name>
 			<type>2</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/LVGL</locationURI>

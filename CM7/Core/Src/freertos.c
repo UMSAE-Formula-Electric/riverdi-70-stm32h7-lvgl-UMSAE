@@ -30,6 +30,7 @@
 #include "lvgl_port_touch.h"
 #include "lvgl_port_display.h"
 #include "ui.h"
+#include "ui_events.h"
 #include "can_driver.h"
 #include "can_port.h"
 #include "motor_controller_can_utils.h"
@@ -154,7 +155,7 @@ void MX_FREERTOS_Init(void);
 
 /* Hook prototypes */
 void vApplicationIdleHook(void);
-void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName);
+void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName);
 
 /* USER CODE BEGIN 2 */
 void vApplicationIdleHook( void )
@@ -173,7 +174,7 @@ void vApplicationIdleHook( void )
 /* USER CODE END 2 */
 
 /* USER CODE BEGIN 4 */
-void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
+void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName)
 {
     (void)xTask;
 
@@ -189,6 +190,10 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
 
     fault_task_name = pcTaskName;
     fault_task_handle = xTask;
+
+    (void)fault_task_name;
+    (void)fault_task_handle;
+    (void)task_name;
 
     /* Optional: break immediately into debugger */
     __BKPT(0);
@@ -214,11 +219,13 @@ void MX_FREERTOS_Init(void) {
 		can_start(g_can1);
 	}
 
-//	g_can2 = can_port_create(2);
-//	if (g_can2 != NULL) {
-//		can_init(g_can2);
-//		can_start(g_can2);
-//	}
+	g_can2 = can_port_create(2);
+	if (g_can2 != NULL) {
+		can_init(g_can2);
+		can_start(g_can2);
+	}
+
+	UIEvents_Init();
 
     /* Create LVGL timer to update dashboard UI */
     lv_timer_create(ui_update_cb, 50, NULL);
@@ -243,14 +250,15 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
+#ifdef DEBUG
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+#endif
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 	lvglTimerHandle = osThreadNew(LVGLTimer, NULL, &lvglTimer_attributes);
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
 	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
-//    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
+    can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
 
   /* USER CODE END RTOS_THREADS */
 
@@ -272,7 +280,7 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-	  /* USER CODE BEGIN StartDefaultTask */
+    UIEvents_PostTest("Default Task running!", sizeof("Default Task running!"));
 	uint16_t speed = 0;
 	uint16_t angle = 0;
 	can_frame_t tx_frame;
@@ -346,9 +354,13 @@ void StartDefaultTask(void *argument)
  */
 void LVGLTimer(void *argument)
 {
-
+	UIEvent_t evt;
     for (;;)
     {
+        while (xQueueReceive(g_ui_event_queue, &evt, 0) == pdPASS) {
+            UI_HandleEvent(&evt);
+        }
+
         lv_timer_handler();
         vTaskDelay(pdMS_TO_TICKS(20));
     }
@@ -373,7 +385,6 @@ void LVGLTimer(void *argument)
 void StartCANTask(void *argument)
 {
     can_frame_t frame;
-
     for (;;)
     {
         if (can_receive(g_can1, &frame, 15) == CAN_OK)
@@ -443,6 +454,7 @@ void StartVehicleStateTask(void *argument)
 {
 
     VehicleState_Init();
+
 
     //TODO This task will get out of hand quickly. The approach needs to change otherwise this will become difficult to maintain.
     for (;;)
