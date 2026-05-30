@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 
+
 void UIToast_Show(const char *message, uint32_t duration_ms);
 
 #endif /* UI_UI_TOAST_H_ */
