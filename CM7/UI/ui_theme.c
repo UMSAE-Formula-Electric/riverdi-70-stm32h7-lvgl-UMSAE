@@ -48,9 +48,9 @@ const UITheme_t UI_Theme_Dark = {
         .sm          = &lv_font_montserrat_18,
         .md          = &lv_font_montserrat_26,
         .lg          = &lv_font_montserrat_40,
-        .value_sm    = &ui_font_Aoto_Gothic_60,
-        .value_md    = &ui_font_Aoto_Gothic_80,
-        .value_lg    = &ui_font_Aoto_Gothic_120,
+        .value_sm    = &lv_font_montserrat_26,
+        .value_md    = &lv_font_montserrat_30,
+        .value_lg    = &lv_font_montserrat_48,
     },
 
     .geometry = {
@@ -130,9 +130,9 @@ const UITheme_t UI_Theme_Light = {
         .sm          = &lv_font_montserrat_18,
         .md          = &lv_font_montserrat_26,
         .lg          = &lv_font_montserrat_40,
-        .value_sm    = &ui_font_Aoto_Gothic_60,
-        .value_md    = &ui_font_Aoto_Gothic_80,
-        .value_lg    = &ui_font_Aoto_Gothic_120,
+        .value_sm    = &lv_font_montserrat_26,
+        .value_md    = &lv_font_montserrat_30,
+        .value_lg    = &lv_font_montserrat_48,
     },
 
     .geometry = {
@@ -212,9 +212,9 @@ const UITheme_t UI_Theme_HighContrast = {
         .sm          = &lv_font_montserrat_18,
         .md          = &lv_font_montserrat_26,
         .lg          = &lv_font_montserrat_40,
-        .value_sm    = &ui_font_Aoto_Gothic_60,
-        .value_md    = &ui_font_Aoto_Gothic_80,
-        .value_lg    = &ui_font_Aoto_Gothic_120,
+        .value_sm    = &lv_font_montserrat_26,
+        .value_md    = &lv_font_montserrat_30,
+        .value_lg    = &lv_font_montserrat_48,
     },
 
     .geometry = {

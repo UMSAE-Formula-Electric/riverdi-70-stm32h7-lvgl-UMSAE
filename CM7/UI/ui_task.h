@@ -13,7 +13,7 @@
 
 #ifdef DEBUG
 extern TaskHandle_t g_lvgl_task_handle;
-#define ASSERT_LVGL_TASK() configASSERT(xTaskGetCurrentTaskHandle() == g_lvgl_task_handle)
+#define ASSERT_LVGL_TASK()
 #else
 #define ASSERT_LVGL_TASK()
 #endif

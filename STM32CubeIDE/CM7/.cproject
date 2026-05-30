@@ -113,7 +113,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Middlewares/LVGL/lvgl/examples|Middlewares/LVGL/lvgl/tests|Middlewares/LVGL/lvgl/demos" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="UI/fonts/ui_font_Aoto_Gothic_80.c|UI/fonts/ui_font_Aoto_Gothic_60.c|UI/fonts/ui_font_Aoto_Gothic_120.c|Middlewares/LVGL/lvgl/examples|Middlewares/LVGL/lvgl/tests|Middlewares/LVGL/lvgl/demos" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -228,7 +228,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Middlewares/LVGL/lvgl/examples|Middlewares/LVGL/lvgl/tests|Middlewares/LVGL/lvgl/demos" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="UI/fonts/ui_font_Aoto_Gothic_80.c|UI/fonts/ui_font_Aoto_Gothic_60.c|UI/fonts/ui_font_Aoto_Gothic_120.c|Middlewares/LVGL/lvgl/examples|Middlewares/LVGL/lvgl/tests|Middlewares/LVGL/lvgl/demos" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

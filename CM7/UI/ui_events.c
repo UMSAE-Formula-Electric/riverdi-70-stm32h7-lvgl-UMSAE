@@ -116,15 +116,6 @@ bool UIEvents_Post_FROM_ISR(const UIEvent_t *evt) {
  * @param inserted  true  → UI_EVENT_SD_INSERTED
  *                  false → UI_EVENT_SD_REMOVED
  */
-
-void UIEvents_PostSD(bool inserted) {
-    UIEvent_t evt = {
-        .type = inserted ? UI_EVENT_SD_INSERTED : UI_EVENT_SD_REMOVED
-    };
-    UIEvents_Post(&evt);
-}
-
-
 void UIEvents_PostSD(bool inserted) {
     UIEvent_t evt = {
         .type = inserted ? UI_EVENT_SD_INSERTED : UI_EVENT_SD_REMOVED

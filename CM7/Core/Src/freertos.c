@@ -224,11 +224,7 @@ void MX_FREERTOS_Init(void) {
 		can_init(g_can2);
 		can_start(g_can2);
 	}
-<<<<<<< HEAD
 
-	UIEvents_Init();
-=======
->>>>>>> 1c50b72 (Cleaned up code quality)
 
 	UIEvents_Init();
 
@@ -283,11 +279,8 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-<<<<<<< HEAD
     UIEvents_PostTest("Default Task running!", sizeof("Default Task running!"));
-=======
-    UIEvents_PostTest("Default Task running!");
->>>>>>> 5581c79 (Created new UI toast notifications)
+
 	uint16_t speed = 0;
 	uint16_t angle = 0;
 	can_frame_t tx_frame;
@@ -365,7 +358,7 @@ void LVGLTimer(void *argument)
 	UIEvent_t evt;
 	//Apply theme style
     UITheme_Init();
-    DashboardScreen_ApplyTheme(UITheme_Get());
+    DashboardUI_ApplyTheme(UITheme_Get());
 
     /* Create LVGL timer to update dashboard UI */
     lv_timer_create(ui_update_cb, 50, NULL);
