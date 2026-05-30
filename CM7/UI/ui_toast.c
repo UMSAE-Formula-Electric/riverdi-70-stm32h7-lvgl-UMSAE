@@ -5,6 +5,7 @@
  *      Author: mason
  */
 #include "ui_toast.h"
+#include "ui_theme.h"
 #include "lvgl/lvgl.h"
 
 /*
@@ -43,26 +44,28 @@ static void set_opa_cb(void *obj, int32_t v) {
  * @param duration_ms How long (ms) the toast remains fully visible before fading.
  */
 void UIToast_Show(const char *message, uint32_t duration_ms) {
+	const UITheme_t *theme = UITheme_Get();
 
     lv_obj_t *screen = lv_screen_active();
 
     /* --- Toast container --- */
     lv_obj_t *toast = lv_obj_create(screen);
     lv_obj_set_size(toast, LV_SIZE_CONTENT, LV_SIZE_CONTENT);   /* Shrink-wrap contents */
-    lv_obj_align(toast, LV_ALIGN_TOP_RIGHT, -5, 10);            /* 5px left, 10px down from top-right */
-    lv_obj_set_style_bg_color(toast, lv_color_hex(0x222222), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(toast, LV_OPA_90, LV_PART_MAIN);    /* Slight transparency */
-    lv_obj_set_style_radius(toast, 8, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(toast, 12, LV_PART_MAIN);
-    lv_obj_set_style_border_width(toast, 0, LV_PART_MAIN);      /* No visible border */
-    /* Prevent the container from intercepting scroll or click events */
-    lv_obj_clear_flag(toast, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_size(toast, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+	lv_obj_align(toast, LV_ALIGN_TOP_RIGHT,-(theme->geometry.pad_sm),theme->geometry.pad_md);
+	lv_obj_set_style_bg_color(toast, theme->colors.bg_overlay, LV_PART_MAIN);
+	lv_obj_set_style_bg_opa(toast, theme->opacity.overlay_bg, LV_PART_MAIN);
+	lv_obj_set_style_radius(toast, theme->geometry.toast_radius, LV_PART_MAIN);
+	lv_obj_set_style_pad_all(toast, theme->geometry.toast_pad, LV_PART_MAIN);
+	lv_obj_set_style_border_width(toast, 0, LV_PART_MAIN);
+
+	lv_obj_clear_flag(toast, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);
 
     /* --- Message label --- */
     lv_obj_t *label = lv_label_create(toast);
     lv_label_set_text(label, message);
-    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_18, LV_PART_MAIN);
+    lv_obj_set_style_text_color(label, theme->colors.text_on_overlay, LV_PART_MAIN);
+    lv_obj_set_style_text_font(label, theme->fonts.sm, LV_PART_MAIN);
 
     /* --- Fade-out animation --- */
     lv_anim_t a;
@@ -71,7 +74,7 @@ void UIToast_Show(const char *message, uint32_t duration_ms) {
     lv_anim_set_user_data(&a, toast);                            /* Passed to ready callback for deletion */
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)set_opa_cb);    /* Per-tick opacity setter */
     lv_anim_set_values(&a, LV_OPA_COVER, LV_OPA_TRANSP);        /* Animate from fully opaque to fully transparent */
-    lv_anim_set_duration(&a, TOAST_ANIM_MS);                     /* Fade lasts TOAST_ANIM_MS ms */
+    lv_anim_set_duration(&a, theme->animation.toast_fade_ms);                     /* Fade lasts TOAST_ANIM_MS ms */
     lv_anim_set_delay(&a, duration_ms);                          /* Begin fade after the display duration */
     lv_anim_set_ready_cb(&a, toast_anim_ready_cb);               /* Delete toast once fade completes */
 

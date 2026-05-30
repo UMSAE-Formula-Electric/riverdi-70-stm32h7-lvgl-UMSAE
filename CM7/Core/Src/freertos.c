@@ -370,7 +370,7 @@ void LVGLTimer(void *argument)
         }
 
         lv_timer_handler();
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(5));
     }
 }
 
