@@ -153,6 +153,7 @@ void UIEvents_PostFault(const char *message, size_t length) {
  *                 Must be < MESSAGE_LENGTH.
  */
 void UIEvents_PostTest(const char *message, size_t length) {
+    configASSERT(length < MESSAGE_LENGTH);
     UIEvent_t evt = { .type = UI_EVENT_TEST };
     snprintf(evt.test.message, sizeof(evt.test.message), "%s", message);
     UIEvents_Post(&evt);
