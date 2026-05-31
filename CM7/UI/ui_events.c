@@ -31,6 +31,7 @@ void UIEvents_Init(void) {
     configASSERT(g_ui_event_queue);
 }
 
+
 /*
  * UI_HandleEvent — dispatches a single UIEvent to the appropriate UI action.
  *
@@ -40,6 +41,7 @@ void UIEvents_Init(void) {
  *
  * @param evt  Pointer to the event to handle. Must not be NULL.
  */
+
 void UI_HandleEvent(const UIEvent_t *evt) {
     switch (evt->type) {
         case UI_EVENT_SD_INSERTED:
@@ -64,6 +66,7 @@ void UI_HandleEvent(const UIEvent_t *evt) {
             break;
     }
 }
+
 
 /*
  * UIEvents_Post — enqueues a UI event for the UI task to process.
@@ -120,6 +123,7 @@ void UIEvents_PostSD(bool inserted) {
     UIEvents_Post(&evt);
 }
 
+
 /*
  * UIEvents_PostFault — enqueues a fault notification with a custom message.
  *
@@ -136,6 +140,7 @@ void UIEvents_PostFault(const char *message, size_t length) {
     snprintf(evt.fault.message, sizeof(evt.fault.message), "%s", message);
     UIEvents_Post(&evt);
 }
+
 
 /*
  * UIEvents_PostTest — enqueues a test notification with a custom message.

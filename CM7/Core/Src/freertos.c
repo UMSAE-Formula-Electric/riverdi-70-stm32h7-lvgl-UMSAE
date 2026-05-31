@@ -225,10 +225,9 @@ void MX_FREERTOS_Init(void) {
 		can_start(g_can2);
 	}
 
+
 	UIEvents_Init();
 
-    /* Create LVGL timer to update dashboard UI */
-    lv_timer_create(ui_update_cb, 50, NULL);
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -281,6 +280,7 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
     UIEvents_PostTest("Default Task running!", sizeof("Default Task running!"));
+
 	uint16_t speed = 0;
 	uint16_t angle = 0;
 	can_frame_t tx_frame;
@@ -354,7 +354,15 @@ void StartDefaultTask(void *argument)
  */
 void LVGLTimer(void *argument)
 {
+
 	UIEvent_t evt;
+	//Apply theme style
+    UITheme_Init();
+    DashboardUI_ApplyTheme(UITheme_Get());
+
+    /* Create LVGL timer to update dashboard UI */
+    lv_timer_create(ui_update_cb, 50, NULL);
+
     for (;;)
     {
         while (xQueueReceive(g_ui_event_queue, &evt, 0) == pdPASS) {
@@ -362,7 +370,7 @@ void LVGLTimer(void *argument)
         }
 
         lv_timer_handler();
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(5));
     }
 }
 

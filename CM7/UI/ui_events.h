@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 
+
 #define MESSAGE_LENGTH 48
 
 typedef enum {
@@ -36,6 +37,7 @@ bool UIEvents_Post(const UIEvent_t *evt);
 void UIEvents_PostSD(bool inserted);
 void UIEvents_PostFault(const char *message, size_t length);
 void UIEvents_PostTest(const char *message, size_t length);
+
 
 #ifdef __cplusplus
 }
