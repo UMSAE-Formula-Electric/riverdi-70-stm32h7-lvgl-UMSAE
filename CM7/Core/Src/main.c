@@ -24,6 +24,7 @@
 #include "dac.h"
 #include "dma2d.h"
 #include "dsihost.h"
+#include "sdmmc.h"
 #include "fatfs.h"
 #include "fdcan.h"
 #include "i2c.h"
@@ -185,6 +186,7 @@ Error_Handler();
   MX_RTC_Init();
   MX_ADC1_Init();
   MX_ADC3_Init();
+  MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
