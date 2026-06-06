@@ -39,6 +39,10 @@
 #include "dashboard_ui.h"
 #include "can_router.h"
 #include "vehicle_state.h"
+
+#include "fatfs.h"
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,7 +113,12 @@ const osThreadAttr_t can2Task_attributes = {
   .priority = (osPriority_t) osPriorityHigh,
 };
 
-
+static osThreadId_t         s_task_handle;
+static const osThreadAttr_t s_task_attr = {
+    .name       = "sdTestTask",
+    .stack_size = 1024 * 2,
+    .priority   = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -125,6 +134,7 @@ void LVGLTimer(void *argument);
 void StartCANTask(void *argument);
 void StartVehicleStateTask(void *argument);
 void StartCAN2Task(void *argument);
+void SDTest_Task(void *argument);
 
 static void ui_update_cb(lv_timer_t *timer)
 {
@@ -250,7 +260,7 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of defaultTask */
 #ifdef DEBUG
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 #endif
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -258,7 +268,7 @@ void MX_FREERTOS_Init(void) {
 	canTaskHandle = osThreadNew(StartCANTask, NULL, &canTask_attributes);
 	vehicleStateTaskHandle = osThreadNew(StartVehicleStateTask, NULL, &vehicleStateTask_attributes);
     can2TaskHandle = osThreadNew(StartCAN2Task, NULL, &can2Task_attributes);
-
+    s_task_handle = osThreadNew(SDTest_Task, NULL, &s_task_attr);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -519,6 +529,42 @@ void StartVehicleStateTask(void *argument)
     }
 }
 
+
+#define SD_TEST_FILENAME    "0:/test.txt"
+#define SD_TEST_INTERVAL_MS 1000
+void SDTest_Task(void *argument)
+{
+    (void)argument;
+
+    FATFS  fs;
+    FIL    file;
+    UINT   written;
+    char   line[64];
+    uint32_t count = 0;
+
+    /* Mount */
+    if (f_mount(&fs, "0:/", 1) != FR_OK) {
+        /* Mount failed — hang here so you can catch it in the debugger */
+        while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    }
+
+    /* Open/create file */
+    if (f_open(&file, SD_TEST_FILENAME, FA_WRITE | FA_OPEN_ALWAYS) != FR_OK) {
+        f_mount(NULL, "0:/", 0);
+        while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    }
+
+    f_lseek(&file, f_size(&file)); /* append */
+
+    for (;;)
+    {
+        int len = snprintf(line, sizeof(line), "Hello SD card! count=%lu\r\n", (unsigned long)count++);
+        f_write(&file, line, (UINT)len, &written);
+        f_sync(&file);   /* flush after every write so data survives a reset */
+
+        vTaskDelay(pdMS_TO_TICKS(SD_TEST_INTERVAL_MS));
+    }
+}
 
 /* USER CODE END Application */
 
